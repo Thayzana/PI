@@ -9,3 +9,4 @@ coverage/
 back/.gemini-key
 back/.env
 back/.env.local
+back/doce_lucro_db.json
