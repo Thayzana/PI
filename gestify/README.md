@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Gestify
 
 Sistema de gestão para confeitarias e comércio/varejo. Stack: **React + Vite** (frontend), **Node + Express + TypeORM** (backend) e **PostgreSQL** (banco de dados).
@@ -138,18 +137,3 @@ Sem `GEMINI_API_KEY`, as rotas de marketing retornam erro. Configure a chave no 
 5. `npm run build` → `npm run start`  
 
 ---
-=======
-
-This contains everything you need to run your app locally.
-
-## Run Locally
-
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
->>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
