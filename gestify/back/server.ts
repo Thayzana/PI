@@ -1,3 +1,4 @@
+import "reflect-metadata";
 import "./load-env.ts";
 import express from "express";
 import path from "path";
@@ -5,6 +6,7 @@ import { createServer as createViteServer } from "vite";
 import router from "./routes.ts";
 import { projectRoot } from "./load-env.ts";
 import { isGeminiConfigured } from "./gemini.ts";
+import { initializeDatabase } from "./database/init.ts";
 
 const rootDir = projectRoot;
 const entryScript = (process.argv[1] ?? "").replace(/\\/g, "/");
@@ -25,6 +27,8 @@ if (isGeminiConfigured()) {
 }
 
 async function startServer() {
+  await initializeDatabase();
+
   const app = express();
   const PORT = 3000;
 
