@@ -7,6 +7,11 @@
     "dev": "tsx back/server.ts",
     "build": "vite build && esbuild back/server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
     "start": "node dist/server.cjs",
+<<<<<<< HEAD
+    "db:create": "tsx back/scripts/create-database.ts",
+    "db:seed": "tsx back/scripts/seed-only.ts",
+=======
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit"
   },
@@ -21,18 +26,28 @@
     "motion": "^12.23.24",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
+<<<<<<< HEAD
+    "pg": "^8.16.0",
+    "reflect-metadata": "^0.2.2",
+    "recharts": "^3.8.1",
+    "typeorm": "^0.3.24",
+=======
     "recharts": "^3.8.1",
     "sqlite3": "^6.0.1",
     "swagger-jsdoc": "^6.3.0",
     "swagger-ui-express": "^5.0.1",
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
     "vite": "^6.2.3"
   },
   "devDependencies": {
     "@types/canvas-confetti": "^1.9.0",
     "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",
+<<<<<<< HEAD
+=======
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
     "autoprefixer": "^10.4.21",
     "esbuild": "^0.25.0",
     "tailwindcss": "^4.1.14",

@@ -1,11 +1,15 @@
 import "./load-env.ts";
 import { Router, Request, Response } from "express";
+<<<<<<< HEAD
+import * as repo from "./repositories/gestify.repository.ts";
+=======
 import {
   dbAll,
   dbRun,
   dbGet,
   initializeDatabase
 } from "./db.js";
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
 import {
   getAiClient,
   isGeminiConfigured,
@@ -27,7 +31,10 @@ function getThemeParam(req: Request): string {
   return typeof theme === "string" ? theme : "";
 }
 
+<<<<<<< HEAD
+=======
 // Status e configuração da chave Gemini (desenvolvimento local)
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
 router.get("/settings/gemini-status", (_req: Request, res: Response) => {
   res.json({ configured: isGeminiConfigured() });
 });
@@ -45,6 +52,14 @@ router.post("/settings/gemini-key", (req: Request, res: Response) => {
   }
 });
 
+<<<<<<< HEAD
+router.get("/dashboard", async (req: Request, res: Response) => {
+  try {
+    if (isVarejoTheme(getThemeParam(req))) {
+      return res.json(getVarejoDashboard());
+    }
+    const stats = await repo.getDashboardData();
+=======
 // Ensure database tables are created on startup
 initializeDatabase().catch((err) => {
   console.error("Erro ao inicializar base de dados:", err);
@@ -116,12 +131,21 @@ router.get("/dashboard", async (req: Request, res: Response) => {
       }
     };
 
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
     res.json(stats);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
 
+<<<<<<< HEAD
+router.get("/products", async (req: Request, res: Response) => {
+  try {
+    if (isVarejoTheme(getThemeParam(req))) {
+      return res.json([...VAREJO_PRODUCTS].sort((a, b) => (b.id ?? 0) - (a.id ?? 0)));
+    }
+    res.json(await repo.findAllProducts());
+=======
 // 2. GET API Products (Inventory)
 router.get("/products", async (req: Request, res: Response) => {
   try {
@@ -132,12 +156,16 @@ router.get("/products", async (req: Request, res: Response) => {
 
     const products = await dbAll(`SELECT * FROM products ORDER BY id DESC`);
     res.json(products);
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
 
+<<<<<<< HEAD
+=======
 // Add new Product
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
 router.post("/products", async (req: Request, res: Response) => {
   try {
     const {
@@ -148,6 +176,27 @@ router.post("/products", async (req: Request, res: Response) => {
     if (!sku || !name || stock === undefined || minimum === undefined || !expiration) {
       return res.status(400).json({ error: "Campos obrigatórios ausentes" });
     }
+<<<<<<< HEAD
+    const newProduct = await repo.createProduct({
+      sku, name,
+      stock: Number(stock),
+      minimum: Number(minimum),
+      expiration,
+      status,
+      price: price !== undefined ? Number(price) : undefined,
+      description,
+      image_url,
+      category,
+      is_promo,
+      promo_price: promo_price !== undefined ? Number(promo_price) : undefined,
+      barcode,
+      unit_type,
+      wholesale_price:
+        wholesale_price !== undefined && wholesale_price !== null
+          ? Number(wholesale_price)
+          : undefined,
+    });
+=======
 
     const result = await dbRun(
       `INSERT INTO products (sku, name, stock, minimum, expiration, status) VALUES (?, ?, ?, ?, ?, ?)`,
@@ -171,13 +220,17 @@ router.post("/products", async (req: Request, res: Response) => {
     );
 
     const newProduct = await dbGet(`SELECT * FROM products WHERE id = ?`, [result.lastID]);
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
     res.status(201).json(newProduct);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
 
+<<<<<<< HEAD
+=======
 // Update Product
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
 router.put("/products/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -186,6 +239,27 @@ router.put("/products/:id", async (req: Request, res: Response) => {
       price, description, image_url, category, is_promo, promo_price,
       barcode, unit_type, wholesale_price,
     } = req.body;
+<<<<<<< HEAD
+    const updated = await repo.updateProduct(Number(id), {
+      sku, name,
+      stock: Number(stock),
+      minimum: Number(minimum),
+      expiration,
+      status,
+      price: price !== undefined ? Number(price) : undefined,
+      description: description || "",
+      image_url: image_url || "",
+      category: category || "Docinhos",
+      is_promo: !!is_promo,
+      promo_price: promo_price !== undefined ? Number(promo_price) : undefined,
+      barcode: barcode || "",
+      unit_type: unit_type || "Unidade",
+      wholesale_price:
+        wholesale_price !== undefined && wholesale_price !== null
+          ? Number(wholesale_price)
+          : undefined,
+    });
+=======
 
     await dbRun(
       `UPDATE products SET sku = ?, name = ?, stock = ?, minimum = ?, expiration = ?, status = ? WHERE id = ?`,
@@ -210,23 +284,36 @@ router.put("/products/:id", async (req: Request, res: Response) => {
     );
 
     const updated = await dbGet(`SELECT * FROM products WHERE id = ?`, [id]);
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
     res.json(updated);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
 
+<<<<<<< HEAD
+router.delete("/products/:id", async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    await repo.deleteProduct(Number(id));
+=======
 // Delete Product
 router.delete("/products/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     await dbRun(`DELETE FROM products WHERE id = ?`, [id]);
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
     res.json({ success: true, message: `Produto id ${id} removido com sucesso` });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
 
+<<<<<<< HEAD
+router.get("/recipes", async (_req: Request, res: Response) => {
+  try {
+    res.json(await repo.findAllRecipesHydrated());
+=======
 // 3. GET / POST Smart Pricing Recipes
 router.get("/recipes", async (req: Request, res: Response) => {
   try {
@@ -243,20 +330,45 @@ router.get("/recipes", async (req: Request, res: Response) => {
     }
     
     res.json(hydratedRecipes);
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
 
+<<<<<<< HEAD
+router.post("/recipes", async (req: Request, res: Response) => {
+  try {
+    const {
+      id, name, yield: yieldCount, margin_ratio, final_price,
+      unit_cost, invisible_costs, subtotal, ingredients,
+    } = req.body;
+
+=======
 // Save Recipe (Insert or Update if matching name)
 router.post("/recipes", async (req: Request, res: Response) => {
   try {
     const { id, name, yield: yieldCount, margin_ratio, final_price, unit_cost, invisible_costs, subtotal, ingredients } = req.body;
     
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
     if (!name || !yieldCount || margin_ratio === undefined || !ingredients || !Array.isArray(ingredients)) {
       return res.status(400).json({ error: "Configuração de receita inválida ou campos incompletos." });
     }
 
+<<<<<<< HEAD
+    const saved = await repo.saveRecipe({
+      id,
+      name,
+      yield: Number(yieldCount),
+      margin_ratio: Number(margin_ratio),
+      final_price: Number(final_price),
+      unit_cost: Number(unit_cost),
+      invisible_costs: Number(invisible_costs),
+      subtotal: Number(subtotal),
+      ingredients,
+    });
+    res.status(201).json(saved);
+=======
     let recipeId = id;
 
     if (recipeId) {
@@ -292,23 +404,36 @@ router.post("/recipes", async (req: Request, res: Response) => {
       ...savedRecipe,
       ingredients: savedIngs
     });
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
 
+<<<<<<< HEAD
+router.delete("/recipes/:id", async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    await repo.deleteRecipe(Number(id));
+=======
 // Delete Recipe
 router.delete("/recipes/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     await dbRun(`DELETE FROM recipes WHERE id = ?`, [id]);
     await dbRun(`DELETE FROM recipe_ingredients WHERE recipe_id = ?`, [id]);
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
     res.json({ success: true, message: `Receita id ${id} removida com sucesso` });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
 
+<<<<<<< HEAD
+router.get("/invisible-costs", async (_req: Request, res: Response) => {
+  try {
+    res.json(await repo.getInvisibleCostsDict());
+=======
 // 4. GET / POST Invisible Costs overhead
 router.get("/invisible-costs", async (req: Request, res: Response) => {
   try {
@@ -318,6 +443,7 @@ router.get("/invisible-costs", async (req: Request, res: Response) => {
       dict[r.key] = r.value;
     });
     res.json(dict);
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -326,32 +452,50 @@ router.get("/invisible-costs", async (req: Request, res: Response) => {
 router.post("/invisible-costs", async (req: Request, res: Response) => {
   try {
     const costs = req.body;
+<<<<<<< HEAD
+    await repo.upsertInvisibleCosts(costs);
+=======
     for (const key of Object.keys(costs)) {
       await dbRun(
         `INSERT INTO invisible_costs (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
         [key, Number(costs[key])]
       );
     }
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
     res.json({ success: true, updated: costs });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
 
+<<<<<<< HEAD
+=======
 // 5. GET / POST Promotions
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
 router.get("/promotions", async (req: Request, res: Response) => {
   try {
     if (isVarejoTheme(getThemeParam(req))) {
       return res.json(VAREJO_PROMOTIONS);
     }
+<<<<<<< HEAD
+    res.json(await repo.findAllPromotions());
+=======
 
     const promos = await dbAll(`SELECT * FROM promotions`);
     res.json(promos);
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
 
+<<<<<<< HEAD
+router.post("/promotions/:id/apply", async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { active } = req.body;
+    const updated = await repo.setPromotionActive(Number(id), !!active);
+=======
 // Apply or activate promotion
 router.post("/promotions/:id/apply", async (req: Request, res: Response) => {
   try {
@@ -359,12 +503,23 @@ router.post("/promotions/:id/apply", async (req: Request, res: Response) => {
     const { active } = req.body; // 1 or 0
     await dbRun(`UPDATE promotions SET active = ? WHERE id = ?`, [active ? 1 : 0, id]);
     const updated = await dbGet(`SELECT * FROM promotions WHERE id = ?`, [id]);
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
     res.json(updated);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
 
+<<<<<<< HEAD
+router.post("/promotions", async (req: Request, res: Response) => {
+  try {
+    const { title, subtitle, type, discount, recovery, status } = req.body;
+    const newPromo = await repo.createPromotion({
+      title, subtitle, type, discount,
+      recovery: Number(recovery || 0),
+      status: status || "Normal",
+    });
+=======
 // Create promotion manually
 router.post("/promotions", async (req: Request, res: Response) => {
   try {
@@ -374,16 +529,23 @@ router.post("/promotions", async (req: Request, res: Response) => {
       [title, subtitle, type, discount, Number(recovery || 0), status || "Normal"]
     );
     const newPromo = await dbGet(`SELECT * FROM promotions WHERE id = ?`, [result.lastID]);
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
     res.json(newPromo);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
 
+<<<<<<< HEAD
+router.post("/marketing/generate", async (req: Request, res: Response) => {
+  try {
+    const { context, type } = req.body;
+=======
 // 6. Gemini powered copy generator for Confeitaria Marketing (IA Marketing Tab)
 router.post("/marketing/generate", async (req: Request, res: Response) => {
   try {
     const { context, type } = req.body; // e.g. "Brigadeiro gourmet — promoção do dia dos namorados" and "caption" | "hashtags" | "calendar"
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
     if (!context) {
       return res.status(400).json({ error: "Descreva o produto ou ocasião do marketing." });
     }
@@ -414,8 +576,14 @@ Formato do JSON de retorno:
       model: "gemini-3.5-flash",
       contents: prompt,
       config: {
+<<<<<<< HEAD
+        systemInstruction:
+          "Você é um assistente especialista em marketing digital especializado em confeitarias, padarias e culinária doce brasileira. Seu tom é amigável, entusiasmado, persuasivo e focado em dar fome ou inspirar desejos irresistíveis.",
+      },
+=======
         systemInstruction: "Você é um assistente especialista em marketing digital especializado em confeitarias, padarias e culinária doce brasileira. Seu tom é amigável, entusiasmado, persuasivo e focado em dar fome ou inspirar desejos irresistíveis."
       }
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
     });
 
     let generatedText = result.text || "Não foi possível gerar sugestões neste momento.";
@@ -428,15 +596,22 @@ Formato do JSON de retorno:
   }
 });
 
+<<<<<<< HEAD
+=======
 // 7. GET / POST / PUT / DELETE Suppliers
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
 router.get("/suppliers", async (req: Request, res: Response) => {
   try {
     if (isVarejoTheme(getThemeParam(req))) {
       return res.json(VAREJO_SUPPLIERS);
     }
+<<<<<<< HEAD
+    res.json(await repo.findAllSuppliers());
+=======
 
     const suppliers = await dbAll(`SELECT * FROM suppliers ORDER BY id DESC`);
     res.json(suppliers);
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -448,6 +623,11 @@ router.post("/suppliers", async (req: Request, res: Response) => {
     if (!name) {
       return res.status(400).json({ error: "Nome é obrigatório" });
     }
+<<<<<<< HEAD
+    const newSupplier = await repo.createSupplier({
+      name, contact, category, active, items,
+    });
+=======
 
     const itemsJson = Array.isArray(items) ? JSON.stringify(items) : "[]";
 
@@ -457,6 +637,7 @@ router.post("/suppliers", async (req: Request, res: Response) => {
     );
 
     const newSupplier = await dbGet(`SELECT * FROM suppliers WHERE id = ?`, [result.lastID]);
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
     res.status(201).json(newSupplier);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -470,6 +651,11 @@ router.put("/suppliers/:id", async (req: Request, res: Response) => {
     if (!name) {
       return res.status(400).json({ error: "Nome é obrigatório" });
     }
+<<<<<<< HEAD
+    const updated = await repo.updateSupplier(Number(id), {
+      name, contact, category, active, items,
+    });
+=======
 
     const itemsJson = Array.isArray(items) ? JSON.stringify(items) : "[]";
 
@@ -479,6 +665,7 @@ router.put("/suppliers/:id", async (req: Request, res: Response) => {
     );
 
     const updated = await dbGet(`SELECT * FROM suppliers WHERE id = ?`, [id]);
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
     res.json(updated);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -488,21 +675,31 @@ router.put("/suppliers/:id", async (req: Request, res: Response) => {
 router.delete("/suppliers/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+<<<<<<< HEAD
+    await repo.deleteSupplier(Number(id));
+=======
     await dbRun(`DELETE FROM suppliers WHERE id = ?`, [id]);
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
     res.json({ success: true, message: `Fornecedor id ${id} removido com sucesso` });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
 
+<<<<<<< HEAD
+=======
 // === PEDIDOS E LOGÍSTICA DE ENTREGA (DELIVERY INTELIGENTE) ===
 
 // List all orders (including products in parsed JSON formats)
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
 router.get("/orders", async (req: Request, res: Response) => {
   try {
     if (isVarejoTheme(getThemeParam(req))) {
       return res.json([...VAREJO_ORDERS].sort((a, b) => (b.id ?? 0) - (a.id ?? 0)));
     }
+<<<<<<< HEAD
+    res.json(await repo.findAllOrders());
+=======
 
     const list = await dbAll("SELECT * FROM orders ORDER BY id DESC");
     // Parse items from string to JSON array if they were saved as a string
@@ -523,11 +720,21 @@ router.get("/orders", async (req: Request, res: Response) => {
       };
     });
     res.json(parsedList);
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
 
+<<<<<<< HEAD
+router.post("/orders", async (req: Request, res: Response) => {
+  try {
+    const body = req.body;
+    if (!body.customer_name || !body.type) {
+      return res.status(400).json({ error: "Nome do cliente e tipo de pedido são obrigatórios" });
+    }
+    const newOrder = await repo.createOrder(body);
+=======
 // Create new order
 router.post("/orders", async (req: Request, res: Response) => {
   try {
@@ -596,17 +803,27 @@ router.post("/orders", async (req: Request, res: Response) => {
         }
       }
     }
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
     res.status(201).json(newOrder);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
 
+<<<<<<< HEAD
+=======
 // Update order status only
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
 router.put("/orders/:id/status", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
+<<<<<<< HEAD
+    if (!status) {
+      return res.status(400).json({ error: "Status é obrigatório" });
+    }
+    const updated = await repo.updateOrderStatus(Number(id), status);
+=======
 
     if (!status) {
       return res.status(400).json({ error: "Status é obrigatório" });
@@ -621,12 +838,19 @@ router.put("/orders/:id/status", async (req: Request, res: Response) => {
         updated.items = [];
       }
     }
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
     res.json(updated);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
 
+<<<<<<< HEAD
+router.put("/orders/:id", async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const updated = await repo.updateOrder(Number(id), req.body);
+=======
 // Update entire order
 router.put("/orders/:id", async (req: Request, res: Response) => {
   try {
@@ -689,17 +913,25 @@ router.put("/orders/:id", async (req: Request, res: Response) => {
         updated.items = [];
       }
     }
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
     res.json(updated);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
 
+<<<<<<< HEAD
+router.delete("/orders/:id", async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    await repo.deleteOrder(Number(id));
+=======
 // Delete order
 router.delete("/orders/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     await dbRun("DELETE FROM orders WHERE id = ?", [Number(id)]);
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
     res.json({ success: true, message: `Pedido ${id} removido com sucesso` });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
