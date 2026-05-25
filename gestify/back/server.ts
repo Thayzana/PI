@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import "reflect-metadata";
 import "./load-env.ts";
 import express from "express";
@@ -7,6 +8,17 @@ import router from "./routes.ts";
 import { projectRoot } from "./load-env.ts";
 import { isGeminiConfigured } from "./gemini.ts";
 import { initializeDatabase } from "./database/init.ts";
+=======
+import "./load-env.ts";
+import express from "express";
+import path from "path";
+import swaggerUi from "swagger-ui-express";
+import { createServer as createViteServer } from "vite";
+import router from "./routes.ts";
+import { swaggerSpec } from "./swagger.ts";
+import { projectRoot } from "./load-env.ts";
+import { isGeminiConfigured } from "./gemini.ts";
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
 
 const rootDir = projectRoot;
 const entryScript = (process.argv[1] ?? "").replace(/\\/g, "/");
@@ -27,8 +39,11 @@ if (isGeminiConfigured()) {
 }
 
 async function startServer() {
+<<<<<<< HEAD
   await initializeDatabase();
 
+=======
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
   const app = express();
   const PORT = 3000;
 
@@ -41,6 +56,21 @@ async function startServer() {
     next();
   });
 
+<<<<<<< HEAD
+=======
+  // Swagger / OpenAPI documentation
+  app.get("/api-docs.json", (_req, res) => {
+    res.json(swaggerSpec);
+  });
+  app.use(
+    "/api-docs",
+    swaggerUi.serve,
+    swaggerUi.setup(swaggerSpec, {
+      customSiteTitle: "Gestify API Docs",
+    })
+  );
+
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
   // Mount Confeitaria Studio API Router
   app.use("/api", router);
 
@@ -64,6 +94,10 @@ async function startServer() {
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Servidor rodando em http://localhost:${PORT}`);
+<<<<<<< HEAD
+=======
+    console.log(`Documentação Swagger: http://localhost:${PORT}/api-docs`);
+>>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
   });
 }
 
