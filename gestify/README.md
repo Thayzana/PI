@@ -138,8 +138,6 @@ Sem `GEMINI_API_KEY`, as rotas de marketing retornam erro. Configure a chave no 
 5. `npm run build` → `npm run start`  
 
 ---
-
-View your app in AI Studio: https://ai.studio/apps/805a9f64-9a8c-46f4-b0bd-ffa4386c8226
 =======
 
 This contains everything you need to run your app locally.
