@@ -17,15 +17,17 @@ import {
   Percent,
   Sparkles
 } from "lucide-react";
-import { DashboardStats } from "../types";
+import { DashboardStats, isRetailSector } from "../types";
 
 interface DashboardPageProps {
   stats: DashboardStats | null;
   loading: boolean;
+  themeId?: string;
   onNavigate: (tab: string) => void;
 }
 
-export default function DashboardPage({ stats, loading, onNavigate }: DashboardPageProps) {
+export default function DashboardPage({ stats, loading, themeId = "confeitaria", onNavigate }: DashboardPageProps) {
+  const isRetail = isRetailSector(themeId);
   if (loading || !stats) {
     return (
       <div className="flex-1 flex flex-col justify-center items-center h-full bg-[#faf6f2] space-y-4 font-sans">
@@ -104,7 +106,9 @@ export default function DashboardPage({ stats, loading, onNavigate }: DashboardP
         <div className="bg-white border border-[#eee7de] p-5 rounded-xl flex flex-col justify-between shadow-sm cursor-pointer hover:border-[#b3543d]/35 transition-all" onClick={() => onNavigate("inventory")} id="stat-validade-alert">
           <div className="flex justify-between items-start">
             <div className="space-y-1">
-              <span className="text-xs font-semibold text-[#7d6f6b] uppercase tracking-wider block">Próximos da Validade</span>
+              <span className="text-xs font-semibold text-[#7d6f6b] uppercase tracking-wider block">
+                {isRetail ? "Reposição urgente" : "Próximos da Validade"}
+              </span>
               <h3 className="text-3xl font-bold text-[#b3543d] font-sans">
                 {stats.near_expiry_count} itens
               </h3>
@@ -114,7 +118,7 @@ export default function DashboardPage({ stats, loading, onNavigate }: DashboardP
             </div>
           </div>
           <p className="text-xs text-rose-750 font-medium mt-4 flex items-center gap-1">
-            <span>Vencendo em até 7 dias</span>
+            <span>{isRetail ? "SKUs abaixo do mínimo de gôndola" : "Vencendo em até 7 dias"}</span>
           </p>
         </div>
 
@@ -128,7 +132,11 @@ export default function DashboardPage({ stats, loading, onNavigate }: DashboardP
           <div className="flex justify-between items-center mb-6">
             <div>
               <h4 className="font-bold text-[#2e2624] text-base">Vendas & lucro</h4>
-              <p className="text-xs text-[#7d6f6b]">Últimos 7 dias de movimentação da confeitaria</p>
+              <p className="text-xs text-[#7d6f6b]">
+                {isRetail
+                  ? "Últimos 7 dias de movimentação do varejo"
+                  : "Últimos 7 dias de movimentação da confeitaria"}
+              </p>
             </div>
             <span className="px-3 py-1 rounded-full bg-[#faf7f2] text-[#b3543d] border border-[#e5dec9]/60 text-[11px] font-bold uppercase tracking-wider">
               Semana

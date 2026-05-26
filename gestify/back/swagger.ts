@@ -4,7 +4,7 @@ const themeQueryParam = {
   name: "theme",
   in: "query" as const,
   description:
-    "Setor da aplicação. Use `varejo` para dados de demonstração do comércio/varejo; omita ou use outro valor para confeitaria (SQLite/JSON local).",
+    "Setor da aplicação. Use `varejo` para dados de demonstração do comércio/varejo; omita ou use outro valor para confeitaria (PostgreSQL).",
   schema: { type: "string", enum: ["confeitaria", "varejo"], example: "confeitaria" },
 };
 

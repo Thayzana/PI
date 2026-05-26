@@ -1,4 +1,7 @@
 import { useEffect, useState, CSSProperties } from "react";
+import { isAuthenticated, logout } from "./lib/auth";
+import { loadProfile, saveProfile, UserProfile } from "./lib/profile";
+import LoginPage from "./pages/LoginPage";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 import DashboardPage from "./pages/DashboardPage";
@@ -103,6 +106,9 @@ const THEME_PRESETS: AppTheme[] = [
 ];
 
 export default function App() {
+  const [authenticated, setAuthenticated] = useState(() => isAuthenticated());
+  const [userProfile, setUserProfile] = useState<UserProfile>(() => loadProfile());
+
   const [activeTab, setActiveTab] = useState<string>(() => {
     const params = new URLSearchParams(window.location.search);
     const tabParam = params.get("tab");
@@ -119,13 +125,26 @@ export default function App() {
     localStorage.setItem("gestify_theme", themeId);
   }, [themeId]);
 
-  // Telemetry statistics
+  const handleProfileUpdate = (profile: UserProfile) => {
+    saveProfile(profile);
+    setUserProfile(profile);
+  };
+
+  const handleLogout = () => {
+    logout();
+    setAuthenticated(false);
+    setActiveTab("dashboard");
+  };
+
+  const handleLoginSuccess = () => {
+    setAuthenticated(true);
+    setActiveTab("dashboard");
+  };
+
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
   const [resetting, setResetting] = useState<boolean>(false);
-
-  // Transferred contexts (e.g., from Promotion tab to AI generator)
   const [transferredContextPrompt, setTransferredContextPrompt] = useState<string>("");
 
   const fetchData = async () => {
@@ -150,8 +169,9 @@ export default function App() {
   };
 
   useEffect(() => {
+    if (!authenticated) return;
     fetchData();
-  }, [activeTab, themeId]);
+  }, [authenticated, activeTab, themeId]);
 
   // Database hard reset action
   const handleResetDatabase = async () => {
@@ -271,7 +291,8 @@ export default function App() {
         return (
           <DashboardPage 
             stats={stats} 
-            loading={loading} 
+            loading={loading}
+            themeId={themeId}
             onNavigate={(tab) => {
               setActiveTab(tab);
             }} 
@@ -313,12 +334,20 @@ export default function App() {
       case "menu-public":
         return <PublicMenuSimulator themeId={themeId} />;
       case "settings":
-        return <SettingsPage onResetDatabase={handleResetDatabase} resetting={resetting} />;
+        return (
+          <SettingsPage
+            onResetDatabase={handleResetDatabase}
+            resetting={resetting}
+            profile={userProfile}
+            onProfileUpdate={handleProfileUpdate}
+          />
+        );
       default:
         return (
           <DashboardPage 
             stats={stats} 
-            loading={loading} 
+            loading={loading}
+            themeId={themeId}
             onNavigate={(tab) => {
               setActiveTab(tab);
             }} 
@@ -344,6 +373,10 @@ export default function App() {
     "--sidebar-hover-bg-val": currentTheme.sidebarHoverBg,
   } as CSSProperties;
 
+  if (!authenticated) {
+    return <LoginPage onSuccess={handleLoginSuccess} />;
+  }
+
   return (
     <div 
       className="flex h-screen bg-page-bg text-[#2c2221] font-sans overflow-hidden" 
@@ -363,6 +396,7 @@ export default function App() {
         isOpen={isSidebarOpen}
         setIsOpen={setIsSidebarOpen}
         theme={currentTheme}
+        onLogout={handleLogout}
       />
 
       {/* Main Column block wrapper */}
@@ -380,6 +414,8 @@ export default function App() {
           themePresets={THEME_PRESETS}
           currentThemeId={themeId}
           onThemeSelect={(id) => setThemeId(normalizeThemeId(id))}
+          profile={userProfile}
+          onProfileUpdate={handleProfileUpdate}
         />
 
         {/* Stateful Page rendering container */}

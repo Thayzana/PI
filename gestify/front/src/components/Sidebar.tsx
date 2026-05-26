@@ -22,6 +22,7 @@ interface SidebarProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   theme: AppTheme;
+  onLogout: () => void;
 }
 
 const MENU_BASE = [
@@ -49,7 +50,7 @@ function getSectorLabel(themeId: string): string {
   }
 }
 
-export default function Sidebar({ activeTab, setActiveTab, lowStockCount, isOpen, setIsOpen, theme }: SidebarProps) {
+export default function Sidebar({ activeTab, setActiveTab, lowStockCount, isOpen, setIsOpen, theme, onLogout }: SidebarProps) {
   const isVarejo = theme.id === "varejo";
 
   const menuItems = MENU_BASE.map((item) => {
@@ -158,10 +159,10 @@ export default function Sidebar({ activeTab, setActiveTab, lowStockCount, isOpen
           id="btn-logout"
           onClick={() => {
             if (confirm("Deseja realmente sair da sua sessão?")) {
-              alert("Sessão finalizada. Até breve!");
+              onLogout();
             }
           }}
-          className="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium hover:bg-red-550/20 hover:text-red-300 text-brand/90 transition-colors duration-200 cursor-pointer"
+          className="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium hover:bg-red-500/20 hover:text-red-300 text-red-200/90 transition-colors duration-200 cursor-pointer"
         >
           <LogOut size={18} />
           <span className="text-left">Sair</span>

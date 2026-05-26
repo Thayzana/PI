@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Gestify
 
 Sistema de gestão para confeitarias e comércio/varejo. Stack: **React + Vite** (frontend), **Node + Express + TypeORM** (backend) e **PostgreSQL** (banco de dados).
@@ -13,7 +12,7 @@ Sistema de gestão para confeitarias e comércio/varejo. Stack: **React + Vite**
 ```
 gestify/
 ├── front/          # Interface React (Vite)
-├── back/           # API Express, entidades TypeORM, seeds
+├── back/           # API Express, entidades TypeORM, seeds, Swagger
 ├── .env.example    # Modelo de variáveis de ambiente
 └── .env.local      # Suas credenciais (não versionado)
 ```
@@ -83,6 +82,13 @@ Abra no navegador: **http://localhost:3000**
 
 O comando sobe o Express na porta `3000` e o Vite em modo middleware (hot reload no frontend).
 
+### Documentação da API (Swagger)
+
+Com o servidor rodando:
+
+- **UI:** http://localhost:3000/api-docs
+- **JSON OpenAPI:** http://localhost:3000/api-docs.json
+
 ### Produção
 
 ```bash
@@ -116,6 +122,41 @@ A API fica em `/api/*`. Exemplos:
 
 **Tema Comércio & Varejo:** o frontend envia `?theme=varejo` nas requisições; nesse modo, listagens e dashboard usam dados mock em `back/sector-data.ts` (sem alterar o banco).
 
+## Login de administrador
+
+O painel exige autenticação antes de exibir o dashboard:
+
+| Campo | Valor |
+|-------|--------|
+| Usuário | `1164` |
+| Senha | `19735` |
+
+A sessão fica salva em `localStorage` até você clicar em **Sair** no menu lateral.
+
+## Perfil do usuário
+
+Nome, empresa, cargo, e-mail e foto podem ser editados em **Editar Perfil** (dropdown do cabeçalho ou em Configurações). Os dados são persistidos no navegador (`localStorage`).
+
+## Upload de imagens de produtos
+
+O campo `image_url` na tabela `products` deve ser **TEXT** (não `varchar(512)`), para aceitar Base64 longo.
+
+**Migrar manualmente (PostgreSQL):**
+
+```bash
+npm run db:migrate
+```
+
+Ou execute o SQL em `back/database/migrations/001_alter_products_image_url_to_text.sql`:
+
+```sql
+ALTER TABLE products
+  ALTER COLUMN image_url TYPE TEXT
+  USING image_url::TEXT;
+```
+
+Reinicie o servidor (`npm run dev`) após a migração.
+
 ## Marketing com IA (Gemini)
 
 Sem `GEMINI_API_KEY`, as rotas de marketing retornam erro. Configure a chave no `.env.local` ou em **Configurações → Chave Gemini** no app.
@@ -128,6 +169,7 @@ Sem `GEMINI_API_KEY`, as rotas de marketing retornam erro. Configure a chave no 
 | `banco de dados "projetoFinal" não existe` | Execute `npm run db:create` |
 | `GEMINI_API_KEY ausente` | Adicione a chave no `.env.local` ou nas Configurações |
 | PostgreSQL não responde | Verifique se o serviço PostgreSQL está rodando |
+| Marcadores `<<<<<<<` no código | Resolva conflitos de merge; não devem existir em arquivos `.ts` |
 
 ## Implantação em servidor novo
 
@@ -140,18 +182,3 @@ Sem `GEMINI_API_KEY`, as rotas de marketing retornam erro. Configure a chave no 
 ---
 
 View your app in AI Studio: https://ai.studio/apps/805a9f64-9a8c-46f4-b0bd-ffa4386c8226
-=======
-
-This contains everything you need to run your app locally.
-
-## Run Locally
-
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
->>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d

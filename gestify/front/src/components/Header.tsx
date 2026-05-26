@@ -13,9 +13,12 @@ import {
   AlertTriangle,
   Clock,
   TrendingUp,
-  Award
+  Award,
+  Pencil
 } from "lucide-react";
 import { AppTheme } from "../types";
+import { UserProfile, getProfileInitials } from "../lib/profile";
+import ProfileEditModal from "./ProfileEditModal";
 
 interface HeaderProps {
   title: string;
@@ -28,6 +31,8 @@ interface HeaderProps {
   themePresets: AppTheme[];
   currentThemeId: string;
   onThemeSelect: (themeId: string) => void;
+  profile: UserProfile;
+  onProfileUpdate: (profile: UserProfile) => void;
 }
 
 interface NotificationItem {
@@ -49,10 +54,14 @@ export default function Header({
   theme,
   themePresets,
   currentThemeId,
-  onThemeSelect
+  onThemeSelect,
+  profile,
+  onProfileUpdate,
 }: HeaderProps) {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const initials = getProfileInitials(profile.name);
   const profileRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
   const [notifications, setNotifications] = useState<NotificationItem[]>([
@@ -283,12 +292,16 @@ export default function Header({
             className="flex items-center gap-2 border-l border-[#eee7de] pl-4 cursor-pointer select-none group"
             id="user-profile-badge"
           >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-brand to-brand-hover flex items-center justify-center text-xs font-bold text-white shadow-inner transition-transform group-hover:scale-105" title="Joas Kelph">
-              JK
-            </div>
+            {profile.avatarUrl ? (
+              <img src={profile.avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover border-2 border-brand shadow-inner" />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-brand to-brand-hover flex items-center justify-center text-xs font-bold text-white shadow-inner transition-transform group-hover:scale-105" title={profile.name}>
+                {initials}
+              </div>
+            )}
             <div className="hidden md:flex flex-col text-left">
-              <span className="text-xs font-bold text-[#2e2624] group-hover:text-brand transition-colors">Kelph Studio</span>
-              <span className="text-[10px] text-[#7d6f6b] font-mono">Chef / Gestor</span>
+              <span className="text-xs font-bold text-[#2e2624] group-hover:text-brand transition-colors">{profile.company}</span>
+              <span className="text-[10px] text-[#7d6f6b] font-mono">{profile.role}</span>
             </div>
           </div>
 
@@ -299,15 +312,19 @@ export default function Header({
               {/* Header profile design card */}
               <div className="p-5 bg-gradient-to-br from-[#faf7f2] to-[#f2ebda]/60 border-b border-[#eee7de]">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-brand text-white flex items-center justify-center text-sm font-bold shadow-md relative shrink-0">
-                    JK
-                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white" title="Ativo" />
-                  </div>
+                  {profile.avatarUrl ? (
+                    <img src={profile.avatarUrl} alt="" className="w-12 h-12 rounded-full object-cover border-2 border-brand shadow-md shrink-0" />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-brand text-white flex items-center justify-center text-sm font-bold shadow-md relative shrink-0">
+                      {initials}
+                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white" title="Ativo" />
+                    </div>
+                  )}
                   <div className="min-w-0">
-                    <h3 className="text-sm font-extrabold text-[#2e2624] leading-tight truncate">Joas Kelph</h3>
+                    <h3 className="text-sm font-extrabold text-[#2e2624] leading-tight truncate">{profile.name}</h3>
                     <p className="text-xs text-brand font-medium truncate flex items-center gap-1 mt-0.5">
                       <Award size={12} />
-                      <span>Kelph Studio</span>
+                      <span>{profile.company}</span>
                     </p>
                   </div>
                 </div>
@@ -319,12 +336,17 @@ export default function Header({
                   <div className="flex items-center gap-2 text-[#7d6f6b]">
                     <Building size={14} className="text-brand shrink-0" />
                     <span className="font-semibold text-[11px] uppercase tracking-wide">Empresa</span>
-                    <span className="ml-auto text-xs font-bold text-[#2e2624]">Kelph Studio</span>
+                    <span className="ml-auto text-xs font-bold text-[#2e2624]">{profile.company}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-[#7d6f6b]">
+                    <User size={14} className="text-brand shrink-0" />
+                    <span className="font-semibold text-[11px] uppercase tracking-wide">Cargo</span>
+                    <span className="ml-auto text-xs font-bold text-[#2e2624]">{profile.role}</span>
                   </div>
                   <div className="flex items-center gap-2 text-[#7d6f6b]">
                     <Mail size={14} className="text-brand shrink-0" />
                     <span className="font-semibold text-[11px] uppercase tracking-wide">E-mail</span>
-                    <span className="ml-auto text-xs font-mono font-medium text-[#2e2624] truncate max-w-[180px]">joaskelph18@gmail.com</span>
+                    <span className="ml-auto text-xs font-mono font-medium text-[#2e2624] truncate max-w-[180px]">{profile.email}</span>
                   </div>
                   <div className="flex items-center gap-2 text-[#7d6f6b]">
                     <Globe size={14} className="text-brand shrink-0" />
@@ -375,8 +397,17 @@ export default function Header({
               </div>
 
               {/* Utility action footer */}
-              <div className="p-3 bg-[#faf7f2] border-t border-[#eee7de] text-center">
+              <div className="p-3 bg-[#faf7f2] border-t border-[#eee7de] flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditProfileOpen(true)}
+                  className="w-full py-2 bg-brand text-white text-xs font-bold rounded-lg hover:opacity-90 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <Pencil size={14} />
+                  Editar Perfil
+                </button>
                 <button 
+                  type="button"
                   onClick={() => setIsProfileOpen(false)}
                   className="w-full py-1.5 bg-white border border-[#eee7de] hover:border-brand/45 hover:text-brand text-xs font-bold text-[#7d6f6b] rounded-lg transition-colors cursor-pointer"
                 >
@@ -388,6 +419,13 @@ export default function Header({
           )}
         </div>
       </div>
+
+      <ProfileEditModal
+        open={isEditProfileOpen}
+        profile={profile}
+        onClose={() => setIsEditProfileOpen(false)}
+        onSave={onProfileUpdate}
+      />
     </header>
   );
 }

@@ -1,12 +1,17 @@
 import { useState, useEffect, FormEvent } from "react";
-import { Settings, RefreshCw, Layers, Shield, Key, Check, AlertCircle } from "lucide-react";
+import { Settings, RefreshCw, Layers, Shield, Key, Check, AlertCircle, User } from "lucide-react";
+import { UserProfile } from "../lib/profile";
+import ProfileEditModal from "../components/ProfileEditModal";
 
 interface SettingsPageProps {
   onResetDatabase: () => void;
   resetting: boolean;
+  profile: UserProfile;
+  onProfileUpdate: (profile: UserProfile) => void;
 }
 
-export default function SettingsPage({ onResetDatabase, resetting }: SettingsPageProps) {
+export default function SettingsPage({ onResetDatabase, resetting, profile, onProfileUpdate }: SettingsPageProps) {
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [geminiKey, setGeminiKey] = useState("");
   const [geminiConfigured, setGeminiConfigured] = useState<boolean | null>(null);
   const [savingKey, setSavingKey] = useState(false);
@@ -63,6 +68,24 @@ export default function SettingsPage({ onResetDatabase, resetting }: SettingsPag
         </div>
 
         <div className="space-y-4">
+          <div className="p-4 bg-[#faf7f2] border border-[#e5dec9]/60 rounded-xl space-y-3">
+            <h4 className="text-xs font-bold text-[#b3543d] uppercase tracking-wider flex items-center gap-1.5">
+              <User size={14} />
+              <span>Perfil do administrador</span>
+            </h4>
+            <div className="text-xs text-[#7d6f6b] space-y-1">
+              <p><strong className="text-[#2e2624]">{profile.name}</strong> — {profile.role}</p>
+              <p>{profile.company} · {profile.email}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setEditProfileOpen(true)}
+              className="px-4 py-2 bg-[#b3543d] text-white font-bold text-xs rounded-xl hover:opacity-90 transition-all cursor-pointer"
+            >
+              Editar perfil
+            </button>
+          </div>
+
           <div className="p-4 bg-[#faf7f2] border border-[#e5dec9]/60 rounded-xl space-y-3">
             <h4 className="text-xs font-bold text-[#b3543d] uppercase tracking-wider flex items-center gap-1.5">
               <Key size={14} />
@@ -132,7 +155,7 @@ export default function SettingsPage({ onResetDatabase, resetting }: SettingsPag
               <span>Infraestrutura do Servidor</span>
             </h4>
             <div className="text-xs text-[#7d6f6b] space-y-1.5 leading-relaxed">
-              <p>• Driver de Banco: <strong className="font-mono text-[#b3543d] font-semibold">SQLite 3 (Drives SQL e relacionais nativos)</strong></p>
+              <p>• Driver de Banco: <strong className="font-mono text-[#b3543d] font-semibold">PostgreSQL + TypeORM</strong></p>
               <p>• Servidor: <strong className="font-mono text-[#b3543d] font-semibold">NodeJS / Express v4.21</strong></p>
               <p>• Modo: <strong className="font-mono text-[#b3543d] font-semibold">Híbrido Full-Stack (Express + Vite SPA)</strong></p>
             </div>
@@ -166,6 +189,13 @@ export default function SettingsPage({ onResetDatabase, resetting }: SettingsPag
         </div>
 
       </div>
+
+      <ProfileEditModal
+        open={editProfileOpen}
+        profile={profile}
+        onClose={() => setEditProfileOpen(false)}
+        onSave={onProfileUpdate}
+      />
     </div>
   );
 }

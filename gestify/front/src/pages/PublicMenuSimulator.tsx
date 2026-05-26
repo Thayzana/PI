@@ -20,7 +20,7 @@ import {
   Loader2,
   Info
 } from "lucide-react";
-import { Product, Order, OrderItem } from "../types";
+import { Product, Order, OrderItem, isRetailSector } from "../types";
 import { withThemeQuery } from "../lib/api";
 
 interface PublicMenuSimulatorProps {
@@ -28,6 +28,7 @@ interface PublicMenuSimulatorProps {
 }
 
 export default function PublicMenuSimulator({ themeId }: PublicMenuSimulatorProps) {
+  const isRetail = isRetailSector(themeId);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -70,7 +71,7 @@ export default function PublicMenuSimulator({ themeId }: PublicMenuSimulatorProp
         const populated = data.map((item: any) => ({
           ...item,
           price: item.price || 12.00,
-          category: item.category || "Bolos"
+          category: item.category || (isRetail ? "Moda Unissex" : "Bolos")
         }));
         setProducts(populated);
       }
@@ -216,7 +217,7 @@ export default function PublicMenuSimulator({ themeId }: PublicMenuSimulatorProp
       }
     } catch (error) {
       console.error(error);
-      alert("Não foi possível conectar com a confeitaria.");
+      alert(isRetail ? "Não foi possível conectar com a loja." : "Não foi possível conectar com a confeitaria.");
     }
   };
 
@@ -233,7 +234,9 @@ export default function PublicMenuSimulator({ themeId }: PublicMenuSimulatorProp
     return matchesSearch && p.category === selectedCategory;
   });
 
-  const categories = ["Todos", "Bolos", "Docinhos", "Tortas", "Bebidas"];
+  const categories = isRetail
+    ? ["Todos", "Moda Masculina", "Moda Feminina", "Moda Unissex", "Calçados", "Acessórios"]
+    : ["Todos", "Bolos", "Docinhos", "Tortas", "Bebidas"];
 
   return (
     <div className="flex-grow flex justify-center bg-gray-100 p-0 sm:p-4 font-sans select-none overflow-y-auto" id="public-menu-simulator">
@@ -245,7 +248,7 @@ export default function PublicMenuSimulator({ themeId }: PublicMenuSimulatorProp
         <div className="bg-emerald-600 text-white py-1.5 px-3 text-[10px] font-black tracking-wider flex items-center justify-between z-10 shrink-0">
           <div className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 bg-emerald-300 rounded-full animate-ping"></span>
-            <span>DOM DOCE CONFEITARIA — ABERTO</span>
+            <span>{isRetail ? "GESTIFY VAREJO — LOJA ABERTA" : "DOM DOCE CONFEITARIA — ABERTO"}</span>
           </div>
           <span className="opacity-80 font-mono">Simulador Online</span>
         </div>
@@ -254,8 +257,14 @@ export default function PublicMenuSimulator({ themeId }: PublicMenuSimulatorProp
         {step === "catalog" && (
           <div className="bg-white border-b border-[#eee7de] p-4 text-center shrink-0 space-y-3 z-10">
             <div>
-              <h1 className="text-sm font-black text-[#2e2624] tracking-tight">☕ Cardápio Digital</h1>
-              <p className="text-[10px] text-gray-400">Monte seu carrinho e faça seu pedido direto para a cozinha.</p>
+              <h1 className="text-sm font-black text-[#2e2624] tracking-tight">
+                {isRetail ? "🛍️ Catálogo Digital" : "☕ Cardápio Digital"}
+              </h1>
+              <p className="text-[10px] text-gray-400">
+                {isRetail
+                  ? "Monte seu carrinho e finalize a compra na loja."
+                  : "Monte seu carrinho e faça seu pedido direto para a cozinha."}
+              </p>
             </div>
             
             {/* Search Input bar */}
@@ -263,7 +272,7 @@ export default function PublicMenuSimulator({ themeId }: PublicMenuSimulatorProp
               <Search className="absolute left-3 top-2.5 text-gray-400" size={13} strokeWidth={2.5} />
               <input 
                 type="text" 
-                placeholder="O que quer adoçar hoje?" 
+                placeholder={isRetail ? "Buscar roupa, calçado ou acessório…" : "O que quer adoçar hoje?"} 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-[#faf6f2] border border-[#eee7de] rounded-xl pl-8 pr-3 py-1.5 text-[11px] text-[#2c2221] placeholder-gray-400 focus:outline-none"
@@ -311,12 +320,12 @@ export default function PublicMenuSimulator({ themeId }: PublicMenuSimulatorProp
               {loading ? (
                 <div className="text-center py-20 text-gray-400">
                   <div className="w-6 h-6 border-2 border-brand border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                  <p className="text-[10px]">Carregando vitrine de doces...</p>
+                  <p className="text-[10px]">{isRetail ? "Carregando vitrine de produtos…" : "Carregando vitrine de doces…"}</p>
                 </div>
               ) : filteredProducts.length === 0 ? (
                 <div className="text-center py-20 text-gray-400 space-y-1">
                   <ShoppingBag size={28} className="mx-auto text-gray-300" />
-                  <p className="text-xs font-bold">Nenhum doce encontrado</p>
+                  <p className="text-xs font-bold">{isRetail ? "Nenhum produto encontrado" : "Nenhum doce encontrado"}</p>
                   <p className="text-[9px]">Tente outra busca ou categoria</p>
                 </div>
               ) : (
@@ -349,7 +358,9 @@ export default function PublicMenuSimulator({ themeId }: PublicMenuSimulatorProp
                           </div>
                           
                           <p className="text-[9px] text-[#7d6f6b] leading-relaxed line-clamp-2">
-                            {prod.description || "Doce artesanal preparado no dia com insumos selecionados."}
+                            {prod.description || (isRetail
+                              ? "Produto selecionado com curadoria da coleção da loja."
+                              : "Doce artesanal preparado no dia com insumos selecionados.")}
                           </p>
 
                           <div className="flex items-center justify-between pt-1">
@@ -553,7 +564,11 @@ export default function PublicMenuSimulator({ themeId }: PublicMenuSimulatorProp
                       <Store size={13} />
                       Sem Taxa de Entrega
                     </p>
-                    <p className="opacity-85 text-[9px]">Retirada direta no balcão da confeitaria sem taxas adicionais. Endereço: Av. Paulista, 1000 — Bela Vista, São Paulo.</p>
+                    <p className="opacity-85 text-[9px]">
+                      {isRetail
+                        ? "Retirada na loja sem taxas adicionais. Av. Paulista, 1000 — Bela Vista, São Paulo."
+                        : "Retirada direta no balcão da confeitaria sem taxas adicionais. Endereço: Av. Paulista, 1000 — Bela Vista, São Paulo."}
+                    </p>
                   </div>
                 )}
               </div>
@@ -620,7 +635,7 @@ export default function PublicMenuSimulator({ themeId }: PublicMenuSimulatorProp
                 className="w-full bg-brand hover:bg-brand-hover text-white py-3 rounded-xl font-black shadow-xs transition-all cursor-pointer text-center flex items-center justify-center gap-1.5 uppercase"
               >
                 <Check size={16} strokeWidth={2.5} />
-                Enviar Pedido p/ Cozinha
+                {isRetail ? "Enviar Pedido" : "Enviar Pedido p/ Cozinha"}
               </button>
 
             </form>
@@ -702,7 +717,9 @@ export default function PublicMenuSimulator({ themeId }: PublicMenuSimulatorProp
             <div className="flex items-center justify-between border-b pb-2">
               <div className="flex items-center gap-2">
                 <ShoppingBag className="text-brand" size={18} />
-                <h3 className="text-xs font-black text-[#2e2624] uppercase">Seu Carrinho de Doces</h3>
+                <h3 className="text-xs font-black text-[#2e2624] uppercase">
+                  {isRetail ? "Seu Carrinho de Compras" : "Seu Carrinho de Doces"}
+                </h3>
               </div>
               <button 
                 onClick={() => setIsCartOpen(false)}

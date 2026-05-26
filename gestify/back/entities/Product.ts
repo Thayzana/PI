@@ -29,7 +29,7 @@ export class Product {
   @Column({ type: "text", nullable: true })
   description?: string;
 
-  @Column({ type: "varchar", length: 512, nullable: true })
+  @Column({ type: "text", nullable: true })
   image_url?: string;
 
   @Column({ type: "varchar", length: 64, nullable: true })

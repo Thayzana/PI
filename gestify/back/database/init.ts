@@ -1,4 +1,5 @@
 import { AppDataSource } from "./data-source.ts";
+import { migrateImageUrlColumn } from "./migrate-image-url.ts";
 import { runSeeds } from "../seeds/run-seeds.ts";
 
 let initialized = false;
@@ -12,6 +13,8 @@ export async function initializeDatabase(): Promise<void> {
     const host = url.replace(/\/\/([^:]+):([^@]+)@/, "//***:***@");
     console.log("[db] PostgreSQL conectado:", host);
   }
+
+  await migrateImageUrlColumn();
 
   await runSeeds();
   initialized = true;

@@ -181,8 +181,8 @@ export const SEED_PROMOTIONS = [
 
 export const SEED_SUPPLIERS = [
   {
-    name: "Distribuidor Coca-Cola Aliança",
-    contact: "(11) 98765-4321 / pedidos@cocacola-alianca.com.br",
+    name: "Distribuidor Coca-Cola PMW",
+    contact: "(63) 98765-4321 / pedidos@cocacola-pmw.com.br",
     category: "Bebidas & Refrigerantes",
     active: 1,
     items: [
@@ -194,8 +194,8 @@ export const SEED_SUPPLIERS = [
     ],
   },
   {
-    name: "Laticínios Alvorada",
-    contact: "(31) 3456-7890 / comercial@laticinios-alvorada.com.br",
+    name: "Laticínios PMW",
+    contact: "(63) 3456-7890 / comercial@laticinios-pmw.com.br",
     category: "Laticínios & Derivados",
     active: 1,
     items: [
@@ -225,7 +225,7 @@ export function buildSeedOrders() {
   return [
     {
       customer_name: "Mariana Souza",
-      customer_phone: "(11) 99876-5432",
+      customer_phone: "(63) 99276-5432",
       type: "Delivery",
       status: "Rota de Envio",
       items: [
@@ -234,23 +234,23 @@ export function buildSeedOrders() {
       ],
       total_value: 101.2,
       delivery_fee: 10.0,
-      cep: "01310-100",
-      rua: "Avenida Paulista",
-      bairro: "Bela Vista",
-      cidade: "São Paulo",
-      estado: "SP",
+      cep: "77001-310",
+      rua: "NS 15",
+      bairro: "Plano Diretor Sul",
+      cidade: "Palmas",
+      estado: "TO",
       numero: "1000",
       complemento: "Apto 42",
-      estimated_time: "35-45 min",
+      estimated_time: "Imediato",
       driver_name: "Carlos Costa",
       driver_type: "Próprio",
-      driver_phone: "(11) 98888-1111",
+      driver_phone: "(63) 99276-5432",
       transport_obs: "Cuidado: Manter Resfriado",
       created_at: new Date(now - 30 * 60 * 1000),
     },
     {
       customer_name: "Guilherme Santos",
-      customer_phone: "(11) 98765-4321",
+      customer_phone: "(63) 99276-5432",
       type: "Balcão",
       status: "Pronto para Entrega",
       items: [{ id: 4, name: "Cheesecake Frutas Vermelhas", quantity: 1, price: 85.0 }],
@@ -272,7 +272,7 @@ export function buildSeedOrders() {
     },
     {
       customer_name: "Ana Beatriz",
-      customer_phone: "(11) 97777-6666",
+      customer_phone: "(63) 99276-5832",
       type: "Encomenda Sazonal",
       status: "Em preparo",
       items: [{ id: 7, name: "Bolo Red Velvet (fatia)", quantity: 5, price: 15.0 }],

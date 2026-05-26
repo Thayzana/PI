@@ -9,7 +9,5 @@ coverage/
 back/.gemini-key
 back/.env
 back/.env.local
-<<<<<<< HEAD
 back/doce_lucro_db.json
-=======
->>>>>>> d3f5fe8c5731f1b4280a0862b7a50dcc2fb6d33d
+

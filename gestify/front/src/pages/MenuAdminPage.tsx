@@ -112,15 +112,25 @@ export default function MenuAdminPage({ themeId }: MenuAdminPageProps) {
     setTimeout(() => setMessage(null), 4000);
   };
 
-  // Pre-selected dessert photos list
   const DESSERT_SUGGESTIONS = [
     { name: "Brigadeiro", url: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=500&q=80" },
     { name: "Bolo de Pote", url: "https://images.unsplash.com/photo-1587314168485-3236d6710814?w=500&q=80" },
     { name: "Torta/Cheesecake", url: "https://images.unsplash.com/photo-1524351199679-46cddf530c04?w=500&q=80" },
     { name: "Macaron", url: "https://images.unsplash.com/photo-1569864358642-9d1684040f43?w=500&q=80" },
     { name: "Cupcake", url: "https://images.unsplash.com/photo-1576618148400-f54bed99fcfd?w=500&q=80" },
-    { name: "Red Velvet", url: "https://images.unsplash.com/photo-1616260841585-0457aa334645?w=500&q=80" }
+    { name: "Red Velvet", url: "https://images.unsplash.com/photo-1616260841585-0457aa334645?w=500&q=80" },
   ];
+
+  const FASHION_SUGGESTIONS = [
+    { name: "Camiseta Classic", url: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&q=80" },
+    { name: "Tênis Slip-on", url: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=500&q=80" },
+    { name: "Bolsa Couro", url: "https://images.unsplash.com/photo-1584917865442-de89d76a96c8?w=500&q=80" },
+    { name: "Calça Jeans", url: "https://images.unsplash.com/photo-1473966962644-7e3e24439b0a?w=500&q=80" },
+    { name: "Óculos Noir", url: "https://images.unsplash.com/photo-1572635196233-2244a6320d8?w=500&q=80" },
+    { name: "Vestido Midi", url: "https://images.unsplash.com/photo-1595777457583-95e059a8aead?w=500&q=80" },
+  ];
+
+  const photoSuggestions = isRetail ? FASHION_SUGGESTIONS : DESSERT_SUGGESTIONS;
 
   // Simulated photo upload
   const handlePhotoUploadSimulate = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -129,7 +139,7 @@ export default function MenuAdminPage({ themeId }: MenuAdminPageProps) {
       const reader = new FileReader();
       reader.onloadend = () => {
         setImageUrl(reader.result as string);
-        showToast("Foto do doce carregada!", "success");
+        showToast(isRetail ? "Foto do produto carregada!" : "Foto do doce carregada!", "success");
       };
       reader.readAsDataURL(file);
     }
@@ -248,7 +258,9 @@ export default function MenuAdminPage({ themeId }: MenuAdminPageProps) {
   });
 
   // Unique categories list
-  const categoriesList = ["Todos", "Bolos", "Docinhos", "Tortas", "Bebidas"];
+  const categoriesList = isRetail
+    ? ["Todos", "Moda Masculina", "Moda Feminina", "Moda Unissex", "Calçados", "Acessórios"]
+    : ["Todos", "Bolos", "Docinhos", "Tortas", "Bebidas"];
 
   return (
     <div className="flex-grow flex flex-col p-4 md:p-8 overflow-y-auto bg-[#faf6f2] font-sans" id="menu-admin-page">
@@ -628,7 +640,7 @@ export default function MenuAdminPage({ themeId }: MenuAdminPageProps) {
                 <div className="space-y-1 mt-1">
                   <span className="text-[8px] text-[#7d6f6b] uppercase font-bold tracking-wider block">Fotos Profissionais Rápidas</span>
                   <div className="flex flex-wrap gap-1 leading-none">
-                    {DESSERT_SUGGESTIONS.map((dItem) => (
+                    {photoSuggestions.map((dItem) => (
                       <button
                         key={dItem.name}
                         type="button"
