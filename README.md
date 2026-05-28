@@ -93,3 +93,37 @@ cd Frontend && npm run build && npm run preview
 ```
 
 Em produção, hospede o frontend (`Frontend/dist`) e a API (`Backend`) separadamente; configure `FRONTEND_URL` no `.env` do Backend para CORS.
+
+## Docker
+
+Requisitos: [Docker](https://www.docker.com/) e Docker Compose v2.
+
+Na raiz do projeto:
+
+```bash
+# Opcional: chave Gemini para marketing com IA
+copy .env.docker.example .env
+
+docker compose up --build
+```
+
+| Serviço    | URL |
+|------------|-----|
+| App (UI)   | http://localhost:8080 |
+| API        | http://localhost:3000 |
+| Swagger    | http://localhost:3000/api-docs |
+| PostgreSQL | `localhost:5432` (usuário/senha: `postgres` / `postgres`, banco: `gestify`) |
+
+O backend aguarda o PostgreSQL ficar saudável, cria as tabelas (TypeORM) e executa os seeds na primeira subida.
+
+Parar e remover containers:
+
+```bash
+docker compose down
+```
+
+Remover também o volume do banco:
+
+```bash
+docker compose down -v
+```
