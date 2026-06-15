@@ -1,0 +1,38 @@
+# Frontend + Postgres local. A API de producao fica no Gestify-Backend (Vercel).
+# Para dev local da API: rode Gestify-Backend em ../Gestify-Backend (porta 3000).
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: gestify-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: gestify
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d gestify"]
+      interval: 2s
+      timeout: 3s
+      retries: 8
+      start_period: 5s
+
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+      args:
+        API_UPSTREAM: ${API_UPSTREAM:-http://host.docker.internal:3000}
+    container_name: gestify-frontend
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  postgres_data:
