@@ -1,10 +1,14 @@
-import {StrictMode} from 'react';
-import {createRoot} from 'react-dom/client';
-import App from './App.tsx';
-import './index.css';
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import App from "./App.tsx";
+import PublicMenuStandalone from "./pages/PublicMenuStandalone.tsx";
+import { isPublicMenuPath } from "./lib/publicMenuUrl.ts";
+import "./index.css";
 
-createRoot(document.getElementById('root')!).render(
+const isPublicMenu = isPublicMenuPath(window.location.pathname);
+
+createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <App />
-  </StrictMode>,
+    {isPublicMenu ? <PublicMenuStandalone /> : <App />}
+  </StrictMode>
 );

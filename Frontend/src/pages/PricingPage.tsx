@@ -3,6 +3,8 @@ import { Plus, Trash2, Sliders, Info, Save, FileText, Check } from "lucide-react
 import { Recipe, RecipeIngredient, InvisibleCosts, isRetailSector } from "../types";
 import confetti from "canvas-confetti";
 import { apiFetch } from "../lib/api";
+import { DEFAULT_PAGE_SIZE, paginateItems } from "../lib/pagination";
+import PaginationControls from "../components/PaginationControls";
 
 interface PricingPageProps {
   onRecipeSaved: () => void;
@@ -41,6 +43,7 @@ export default function PricingPage({ onRecipeSaved, themeId }: PricingPageProps
 
   const [saving, setSaving] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(false);
+  const [recipesPage, setRecipesPage] = useState(1);
 
   // Fetch saved recipes and current costs
   const loadData = async () => {
@@ -81,6 +84,12 @@ export default function PricingPage({ onRecipeSaved, themeId }: PricingPageProps
       ]);
     }
   }, [themeId]);
+
+  useEffect(() => {
+    setRecipesPage(1);
+  }, [savedRecipes.length, themeId]);
+
+  const paginatedRecipes = paginateItems(savedRecipes, recipesPage, DEFAULT_PAGE_SIZE);
 
   // Set calculator to a loaded recipe
   const handleSelectRecipe = (recipe: Recipe) => {
@@ -572,7 +581,7 @@ export default function PricingPage({ onRecipeSaved, themeId }: PricingPageProps
               <p className="text-xs text-[#7d6f6b] leading-relaxed">Nenhuma receita salva. Modele ingredientes e salve no botão acima!</p>
             ) : (
               <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
-                {savedRecipes.map((r) => (
+                {paginatedRecipes.map((r) => (
                   <div
                     key={r.id}
                     className={`p-3 rounded-xl border flex justify-between items-center cursor-pointer transition ${
@@ -602,6 +611,13 @@ export default function PricingPage({ onRecipeSaved, themeId }: PricingPageProps
                 ))}
               </div>
             )}
+            <PaginationControls
+              page={recipesPage}
+              pageSize={DEFAULT_PAGE_SIZE}
+              totalItems={savedRecipes.length}
+              onPageChange={setRecipesPage}
+              className="mt-3"
+            />
           </div>
 
         </div>

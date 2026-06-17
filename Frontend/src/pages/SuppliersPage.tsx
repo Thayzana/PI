@@ -19,6 +19,8 @@ import {
 import { motion } from "motion/react";
 import { Supplier } from "../types";
 import { withThemeQuery, apiFetch } from "../lib/api";
+import { DEFAULT_PAGE_SIZE, paginateItems } from "../lib/pagination";
+import PaginationControls from "../components/PaginationControls";
 
 interface SuppliersPageProps {
   themeId: string;
@@ -32,6 +34,7 @@ export default function SuppliersPage({ themeId }: SuppliersPageProps) {
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [listPage, setListPage] = useState(1);
 
   // Selected Supplier for displaying detailed products
   const [selectedSupplierId, setSelectedSupplierId] = useState<number | null>(null);
@@ -82,6 +85,10 @@ export default function SuppliersPage({ themeId }: SuppliersPageProps) {
     fetchSuppliers();
   }, [themeId]);
 
+  useEffect(() => {
+    setListPage(1);
+  }, [searchQuery, selectedCategory, themeId]);
+
   // Filter list
   const filteredSuppliers = suppliers.filter((supplier) => {
     const matchesSearch = 
@@ -96,6 +103,8 @@ export default function SuppliersPage({ themeId }: SuppliersPageProps) {
 
     return matchesSearch && matchesCategory;
   });
+
+  const paginatedSuppliers = paginateItems(filteredSuppliers, listPage, DEFAULT_PAGE_SIZE);
 
   // Unique categories list for the filter select
   const categoriesList = Array.from(
@@ -341,7 +350,7 @@ export default function SuppliersPage({ themeId }: SuppliersPageProps) {
                 <p className="text-[11px] text-[#7d6f6b]/85 mt-1">Experimente buscar por outros termos ou limpe o filtro.</p>
               </div>
             ) : (
-              filteredSuppliers.map((supplier) => {
+              paginatedSuppliers.map((supplier) => {
                 const isSelected = supplier.id === selectedSupplierId;
                 const isActive = supplier.active === 1;
 
@@ -403,6 +412,13 @@ export default function SuppliersPage({ themeId }: SuppliersPageProps) {
                 );
               })
             )}
+            <PaginationControls
+              page={listPage}
+              pageSize={DEFAULT_PAGE_SIZE}
+              totalItems={filteredSuppliers.length}
+              onPageChange={setListPage}
+              className="p-4 shrink-0"
+            />
           </div>
         </div>
 

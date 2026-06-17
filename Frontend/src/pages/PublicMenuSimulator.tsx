@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { 
   ShoppingBag, 
   MapPin, 
@@ -26,9 +26,13 @@ import { sortByNamePt } from "../lib/sort";
 
 interface PublicMenuSimulatorProps {
   themeId: string;
+  /** Página pública em /cardapio (sem login, layout full-screen). */
+  standalone?: boolean;
 }
 
-export default function PublicMenuSimulator({ themeId }: PublicMenuSimulatorProps) {
+const CATALOG_PAGE_SIZE = 8;
+
+export default function PublicMenuSimulator({ themeId, standalone = false }: PublicMenuSimulatorProps) {
   const isRetail = isRetailSector(themeId);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,6 +66,10 @@ export default function PublicMenuSimulator({ themeId }: PublicMenuSimulatorProp
   // Success screen details
   const [placedOrderId, setPlacedOrderId] = useState<number | null>(null);
 
+  const [visibleCount, setVisibleCount] = useState(CATALOG_PAGE_SIZE);
+  const scrollRootRef = useRef<HTMLDivElement>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
   const loadCardapio = async () => {
     try {
       setLoading(true);
@@ -86,6 +94,44 @@ export default function PublicMenuSimulator({ themeId }: PublicMenuSimulatorProp
   useEffect(() => {
     loadCardapio();
   }, [themeId]);
+
+  useEffect(() => {
+    setVisibleCount(CATALOG_PAGE_SIZE);
+  }, [searchQuery, selectedCategory, themeId, products.length]);
+
+  const filteredProducts = sortByNamePt(
+    products.filter((p) => {
+      const matchesSearch =
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase()));
+
+      if (selectedCategory === "Todos") return matchesSearch;
+      return matchesSearch && p.category === selectedCategory;
+    })
+  );
+
+  const visibleProducts = filteredProducts.slice(0, visibleCount);
+  const hasMoreProducts = visibleCount < filteredProducts.length;
+
+  useEffect(() => {
+    const root = scrollRootRef.current;
+    const target = loadMoreRef.current;
+    if (!root || !target || !hasMoreProducts) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setVisibleCount((current) =>
+            Math.min(current + CATALOG_PAGE_SIZE, filteredProducts.length)
+          );
+        }
+      },
+      { root, rootMargin: "100px", threshold: 0.1 }
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [hasMoreProducts, filteredProducts.length, visibleCount]);
 
   const handleCepLookup = async (cepVal: string) => {
     const rawCep = cepVal.replace(/\D/g, "");
@@ -227,34 +273,32 @@ export default function PublicMenuSimulator({ themeId }: PublicMenuSimulatorProp
     return Math.round(((orig - promo) / orig) * 100);
   };
 
-  const filteredProducts = sortByNamePt(
-    products.filter((p) => {
-      const matchesSearch =
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase()));
-
-      if (selectedCategory === "Todos") return matchesSearch;
-      return matchesSearch && p.category === selectedCategory;
-    })
-  );
-
   const categories = isRetail
     ? ["Todos", "Moda Masculina", "Moda Feminina", "Moda Unissex", "Calçados", "Acessórios"]
     : ["Todos", "Bolos", "Docinhos", "Tortas", "Bebidas"];
 
   return (
-    <div className="flex-grow flex justify-center bg-gray-100 p-0 sm:p-4 font-sans select-none overflow-y-auto" id="public-menu-simulator">
-      
-      {/* Simulation Frame Wrapper resembling a modern smartphone */}
-      <div className="w-full max-w-md bg-[#faf8f5] shadow-xl sm:rounded-2xl flex flex-col h-full min-h-[550px] relative overflow-hidden border border-gray-200">
-        
-        {/* Banner Mocked Shop Status */}
+    <div
+      className={
+        standalone
+          ? "min-h-screen flex flex-col bg-gray-100 font-sans select-none"
+          : "flex-grow flex justify-center bg-gray-100 p-0 sm:p-4 font-sans select-none overflow-y-auto"
+      }
+      id="public-menu-simulator"
+    >
+      <div
+        className={
+          standalone
+            ? "w-full max-w-lg mx-auto flex flex-col min-h-screen bg-[#faf8f5] relative overflow-hidden"
+            : "w-full max-w-md bg-[#faf8f5] shadow-xl sm:rounded-2xl flex flex-col h-full min-h-[550px] relative overflow-hidden border border-gray-200"
+        }
+      >
         <div className="bg-emerald-600 text-white py-1.5 px-3 text-[10px] font-black tracking-wider flex items-center justify-between z-10 shrink-0">
           <div className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 bg-emerald-300 rounded-full animate-ping"></span>
             <span>{isRetail ? "GESTIFY VAREJO — LOJA ABERTA" : "DOM DOCE CONFEITARIA — ABERTO"}</span>
           </div>
-          <span className="opacity-80 font-mono">Simulador Online</span>
+          <span className="opacity-80 font-mono">{standalone ? "Peça online" : "Simulador Online"}</span>
         </div>
 
         {/* Dynamic Headers based on step */}
@@ -318,7 +362,7 @@ export default function PublicMenuSimulator({ themeId }: PublicMenuSimulatorProp
         )}
 
         {/* Main Content Area */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-3.5">
+        <div ref={scrollRootRef} className="flex-1 overflow-y-auto p-3 space-y-3.5">
           {step === "catalog" && (
             <>
               {loading ? (
@@ -333,8 +377,9 @@ export default function PublicMenuSimulator({ themeId }: PublicMenuSimulatorProp
                   <p className="text-[9px]">Tente outra busca ou categoria</p>
                 </div>
               ) : (
+                <>
                 <div className="grid grid-cols-1 gap-2.5">
-                  {filteredProducts.map((prod) => {
+                  {visibleProducts.map((prod) => {
                     const hasPromo = !!prod.is_promo && prod.promo_price;
                     const finalPrice = hasPromo ? prod.promo_price : prod.price;
                     return (
@@ -393,6 +438,16 @@ export default function PublicMenuSimulator({ themeId }: PublicMenuSimulatorProp
                     );
                   })}
                 </div>
+                {hasMoreProducts && (
+                  <div ref={loadMoreRef} className="py-4 text-center">
+                    <Loader2 className="animate-spin mx-auto text-brand mb-1" size={18} />
+                    <p className="text-[10px] text-gray-400">Carregando mais itens…</p>
+                  </div>
+                )}
+                {!hasMoreProducts && filteredProducts.length > CATALOG_PAGE_SIZE && (
+                  <p className="text-center text-[10px] text-gray-400 py-2">Você viu todos os itens</p>
+                )}
+                </>
               )}
             </>
           )}

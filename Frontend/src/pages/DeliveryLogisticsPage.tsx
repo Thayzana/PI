@@ -26,6 +26,8 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { Order, OrderItem, Product } from "../types";
 import { withThemeQuery, apiFetch } from "../lib/api";
+import { DEFAULT_PAGE_SIZE, paginateItems } from "../lib/pagination";
+import PaginationControls from "../components/PaginationControls";
 
 interface DeliveryLogisticsPageProps {
   themeId: string;
@@ -41,6 +43,7 @@ export default function DeliveryLogisticsPage({ themeId }: DeliveryLogisticsPage
   // Search/Filters
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("Todos");
+  const [ordersPage, setOrdersPage] = useState(1);
 
   // Novo Pedido Modal & Form States
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -206,6 +209,10 @@ export default function DeliveryLogisticsPage({ themeId }: DeliveryLogisticsPage
 
     return () => clearInterval(interval);
   }, [themeId]);
+
+  useEffect(() => {
+    setOrdersPage(1);
+  }, [searchQuery, statusFilter, themeId]);
 
   // Handler for Cep lookup
   const handleCepLookup = async (cepVal: string) => {
@@ -453,6 +460,8 @@ export default function DeliveryLogisticsPage({ themeId }: DeliveryLogisticsPage
     return matchesSearch && o.status === statusFilter;
   });
 
+  const paginatedOrders = paginateItems(filteredOrders, ordersPage, DEFAULT_PAGE_SIZE);
+
   // Calculate stats values
   const totalOrdersCount = orders.length;
   const inPreparationCount = orders.filter(o => o.status === "Em preparo").length;
@@ -617,7 +626,7 @@ export default function DeliveryLogisticsPage({ themeId }: DeliveryLogisticsPage
                 <p className="text-[10px]">Crie um novo pedido ou mude o filtro para visualizar.</p>
               </div>
             ) : (
-              filteredOrders.map((order) => {
+              paginatedOrders.map((order) => {
                 const isSelected = selectedOrder?.id === order.id;
                 return (
                   <div
@@ -683,6 +692,13 @@ export default function DeliveryLogisticsPage({ themeId }: DeliveryLogisticsPage
                 );
               })
             )}
+            <PaginationControls
+              page={ordersPage}
+              pageSize={DEFAULT_PAGE_SIZE}
+              totalItems={filteredOrders.length}
+              onPageChange={setOrdersPage}
+              className="px-1 pt-2"
+            />
           </div>
         </div>
 

@@ -3,6 +3,8 @@ import { Sparkles, Check, Play, Percent, Tag, ShieldCheck, HelpCircle } from "lu
 import { Promotion } from "../types";
 import { withThemeQuery, apiFetch } from "../lib/api";
 import confetti from "canvas-confetti";
+import { DEFAULT_PAGE_SIZE, paginateItems } from "../lib/pagination";
+import PaginationControls from "../components/PaginationControls";
 
 interface PromotionsPageProps {
   onNavigateToMarketing: (contextPrompt: string) => void;
@@ -12,6 +14,7 @@ interface PromotionsPageProps {
 export default function PromotionsPage({ onNavigateToMarketing, themeId }: PromotionsPageProps) {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
 
   const fetchPromotions = async () => {
     setLoading(true);
@@ -35,6 +38,10 @@ export default function PromotionsPage({ onNavigateToMarketing, themeId }: Promo
   useEffect(() => {
     fetchPromotions();
   }, [themeId]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [themeId, promotions.length]);
 
   const handleApplyPromotion = async (promo: Promotion) => {
     const isActivating = !promo.active;
@@ -71,6 +78,7 @@ export default function PromotionsPage({ onNavigateToMarketing, themeId }: Promo
 
   // Aggregated estimations
   const totalPotentialRecuperation = promotions.reduce((sum, p) => sum + (p.recovery || 0), 0);
+  const paginatedPromotions = paginateItems(promotions, page, DEFAULT_PAGE_SIZE);
 
   return (
     <div className="flex-1 p-8 overflow-y-auto bg-[#faf6f2] text-[#2c2221] font-sans space-y-6" id="promotions-page">
@@ -107,7 +115,7 @@ export default function PromotionsPage({ onNavigateToMarketing, themeId }: Promo
           <p className="text-xs text-[#7d6f6b]">Buscando dados de cupom...</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5" id="promotions-grid">
-            {promotions.map((p) => {
+            {paginatedPromotions.map((p) => {
               const isApplied = p.active === 1;
               const isBOGO = p.type === "BOGO";
 
@@ -187,6 +195,12 @@ export default function PromotionsPage({ onNavigateToMarketing, themeId }: Promo
             })}
           </div>
         )}
+        <PaginationControls
+          page={page}
+          pageSize={DEFAULT_PAGE_SIZE}
+          totalItems={promotions.length}
+          onPageChange={setPage}
+        />
       </div>
 
     </div>

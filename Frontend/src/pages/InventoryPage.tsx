@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Package, AlertTriangle, Clock, Search, Plus, Trash2, Calendar, Barcode } from "lucide-react";
 import { Product, UNIT_TYPE_OPTIONS, UnitType, isRetailSector } from "../types";
 import { apiFetch } from "../lib/api";
+import { DEFAULT_PAGE_SIZE, paginateItems } from "../lib/pagination";
+import PaginationControls from "../components/PaginationControls";
 
 interface InventoryPageProps {
   products: Product[];
@@ -38,6 +40,7 @@ export default function InventoryPage({ products, onProductsUpdated, loading, th
   const [newWholesalePrice, setNewWholesalePrice] = useState<number | "">("");
 
   const [saving, setSaving] = useState(false);
+  const [page, setPage] = useState(1);
 
   // Helper date calculator
   const checkNearExpiry = (dateStr: string) => {
@@ -74,6 +77,12 @@ export default function InventoryPage({ products, onProductsUpdated, loading, th
     }
     return matchSearch;
   });
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, filterType, globalSearch, products.length, themeId]);
+
+  const paginatedProducts = paginateItems(filteredProducts, page, DEFAULT_PAGE_SIZE);
 
   // Calculate status badge dynamically
   const getProductStatus = (p: Product) => {
@@ -481,7 +490,7 @@ export default function InventoryPage({ products, onProductsUpdated, loading, th
 
               {/* Rows block */}
               <tbody className="divide-y divide-[#eee7de]">
-                {filteredProducts.map((p) => {
+                {paginatedProducts.map((p) => {
                   const statusInfo = getProductStatus(p);
                   const isExpiringSoon = statusInfo.label === "Vencendo";
                   const isLow = statusInfo.label === "Baixo";
@@ -566,6 +575,13 @@ export default function InventoryPage({ products, onProductsUpdated, loading, th
 
             </table>
           )}
+          <PaginationControls
+            page={page}
+            pageSize={DEFAULT_PAGE_SIZE}
+            totalItems={filteredProducts.length}
+            onPageChange={setPage}
+            className="mt-4"
+          />
         </div>
 
       </div>

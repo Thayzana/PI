@@ -23,6 +23,9 @@ import { Product, UNIT_TYPE_OPTIONS, UnitType, isRetailSector } from "../types";
 import { withThemeQuery, apiFetch } from "../lib/api";
 import { sortByNamePt } from "../lib/sort";
 import { IMAGE_ACCEPT, readImageAsDataUrl, validateImageFile } from "../lib/imageUpload";
+import { getPublicMenuUrl } from "../lib/publicMenuUrl";
+import { DEFAULT_PAGE_SIZE, paginateItems } from "../lib/pagination";
+import PaginationControls from "../components/PaginationControls";
 
 interface MenuAdminPageProps {
   themeId: string;
@@ -63,13 +66,10 @@ export default function MenuAdminPage({ themeId }: MenuAdminPageProps) {
   const [wholesalePrice, setWholesalePrice] = useState<number>(0);
 
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const [listPage, setListPage] = useState(1);
 
-  // QR Code URL creation
-  const getPublicMenuUrl = () => {
-    return `${window.location.origin}?tab=menu-public`;
-  };
-
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(getPublicMenuUrl())}`;
+  const publicMenuUrl = getPublicMenuUrl(themeId);
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(publicMenuUrl)}`;
 
   const loadProducts = async () => {
     try {
@@ -89,6 +89,10 @@ export default function MenuAdminPage({ themeId }: MenuAdminPageProps) {
   useEffect(() => {
     loadProducts();
   }, [themeId]);
+
+  useEffect(() => {
+    setListPage(1);
+  }, [searchQuery, selectedCategory, themeId]);
 
   const clearForm = () => {
     setIsEditing(false);
@@ -267,6 +271,8 @@ export default function MenuAdminPage({ themeId }: MenuAdminPageProps) {
     })
   );
 
+  const paginatedProducts = paginateItems(filteredProducts, listPage, DEFAULT_PAGE_SIZE);
+
   // Unique categories list
   const categoriesList = [
     "Todos",
@@ -302,7 +308,7 @@ export default function MenuAdminPage({ themeId }: MenuAdminPageProps) {
         </div>
 
         <a 
-          href={getPublicMenuUrl()}
+          href={publicMenuUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="bg-brand/10 hover:bg-brand/20 text-brand text-xs font-bold px-3 py-2 rounded-xl border border-brand/20 inline-flex items-center gap-1.5 transition-all text-center"
@@ -338,7 +344,7 @@ export default function MenuAdminPage({ themeId }: MenuAdminPageProps) {
                 Link do seu Cardápio Digital
               </h4>
               <p className="text-[10px] text-[#7d6f6b] max-w-sm line-clamp-1 border-b border-gray-100 pb-2">
-                {getPublicMenuUrl()}
+                {publicMenuUrl}
               </p>
               
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
@@ -355,7 +361,7 @@ export default function MenuAdminPage({ themeId }: MenuAdminPageProps) {
                 
                 <button
                   onClick={() => {
-                    navigator.clipboard.writeText(getPublicMenuUrl());
+                    navigator.clipboard.writeText(publicMenuUrl);
                     showToast("Link copiado para a área de transferência!", "success");
                   }}
                   className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-[10px] font-black px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5 transition-all cursor-pointer"
@@ -415,7 +421,7 @@ export default function MenuAdminPage({ themeId }: MenuAdminPageProps) {
                   <p className="text-[10px]">Lançe um item usando o painel lateral.</p>
                 </div>
               ) : (
-                filteredProducts.map((prod) => {
+                paginatedProducts.map((prod) => {
                   const hasPromo = !!prod.is_promo;
                   return (
                     <div key={prod.id} className="pt-3.5 first:pt-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -490,6 +496,13 @@ export default function MenuAdminPage({ themeId }: MenuAdminPageProps) {
                   );
                 })
               )}
+              <PaginationControls
+                page={listPage}
+                pageSize={DEFAULT_PAGE_SIZE}
+                totalItems={filteredProducts.length}
+                onPageChange={setListPage}
+                className="px-1"
+              />
             </div>
           </div>
         </div>

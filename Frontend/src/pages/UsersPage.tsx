@@ -2,6 +2,8 @@ import { FormEvent, useEffect, useState } from "react";
 import { Shield, UserPlus, Trash2, Edit2, X, Check } from "lucide-react";
 import { apiFetch } from "../lib/api";
 import { AuthUser } from "../lib/auth";
+import { DEFAULT_PAGE_SIZE, paginateItems } from "../lib/pagination";
+import PaginationControls from "../components/PaginationControls";
 
 export default function UsersPage() {
   const [users, setUsers] = useState<AuthUser[]>([]);
@@ -17,6 +19,7 @@ export default function UsersPage() {
     role: "operator" as "admin" | "operator",
     active: true,
   });
+  const [page, setPage] = useState(1);
 
   const loadUsers = async () => {
     setLoading(true);
@@ -38,6 +41,10 @@ export default function UsersPage() {
   useEffect(() => {
     loadUsers();
   }, []);
+
+  useEffect(() => {
+    setPage(1);
+  }, [users.length]);
 
   const resetForm = () => {
     setForm({
@@ -111,6 +118,8 @@ export default function UsersPage() {
     }
     await loadUsers();
   };
+
+  const paginatedUsers = paginateItems(users, page, DEFAULT_PAGE_SIZE);
 
   return (
     <div className="flex-1 p-6 md:p-8 overflow-y-auto bg-page-bg">
@@ -250,7 +259,7 @@ export default function UsersPage() {
                 </tr>
               </thead>
               <tbody>
-                {users.map((user) => (
+                {paginatedUsers.map((user) => (
                   <tr key={user.id} className="border-t border-[#eee7de]">
                     <td className="p-3 font-mono">{user.username}</td>
                     <td className="p-3">{user.name}</td>
@@ -286,6 +295,13 @@ export default function UsersPage() {
               </tbody>
             </table>
           )}
+          <PaginationControls
+            page={page}
+            pageSize={DEFAULT_PAGE_SIZE}
+            totalItems={users.length}
+            onPageChange={setPage}
+            className="p-4"
+          />
         </div>
       </div>
     </div>

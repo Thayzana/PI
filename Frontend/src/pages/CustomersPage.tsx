@@ -2,6 +2,8 @@ import { FormEvent, useEffect, useState } from "react";
 import { UserCircle, UserPlus, Trash2, Edit2, X, Check, Phone } from "lucide-react";
 import { apiFetch } from "../lib/api";
 import { comparePt } from "../lib/sort";
+import { DEFAULT_PAGE_SIZE, paginateItems } from "../lib/pagination";
+import PaginationControls from "../components/PaginationControls";
 
 export interface Customer {
   id: number;
@@ -18,6 +20,7 @@ export default function CustomersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState({
@@ -48,6 +51,10 @@ export default function CustomersPage() {
   useEffect(() => {
     loadCustomers();
   }, []);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
 
   const resetForm = () => {
     setForm({ name: "", phone: "", email: "", address: "", notes: "" });
@@ -115,6 +122,8 @@ export default function CustomersPage() {
         (c.email || "").toLowerCase().includes(search.toLowerCase())
     )
     .sort((a, b) => comparePt(a.name, b.name));
+
+  const paginatedCustomers = paginateItems(filtered, page, DEFAULT_PAGE_SIZE);
 
   return (
     <div className="flex-1 p-6 md:p-8 overflow-y-auto bg-page-bg">
@@ -228,7 +237,7 @@ export default function CustomersPage() {
             <p className="p-6 text-sm text-[#7d6f6b]">Nenhum cliente encontrado.</p>
           ) : (
             <ul className="divide-y divide-[#eee7de]">
-              {filtered.map((customer) => (
+              {paginatedCustomers.map((customer) => (
                 <li
                   key={customer.id}
                   className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
@@ -264,6 +273,13 @@ export default function CustomersPage() {
               ))}
             </ul>
           )}
+          <PaginationControls
+            page={page}
+            pageSize={DEFAULT_PAGE_SIZE}
+            totalItems={filtered.length}
+            onPageChange={setPage}
+            className="p-4"
+          />
         </div>
       </div>
     </div>
