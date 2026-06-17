@@ -368,7 +368,7 @@ export default function LabelPage() {
                 >
                   <option value="Refrigerado">Refrigerado (2°C a 8°C)</option>
                   <option value="Congelado">Congelado (-18°C)</option>
-                  <option value="Temperatura Ambient">Temperatura Ambiente</option>
+                  <option value="Temperatura Ambiente">Temperatura Ambiente</option>
                 </select>
               </div>
 

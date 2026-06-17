@@ -104,10 +104,12 @@ export default function DeliveryLogisticsPage({ themeId }: DeliveryLogisticsPage
       if (ordRes.ok) {
         const ordData = await ordRes.json();
         setOrders(ordData);
-        // Default select the first order if available
-        if (ordData.length > 0) {
-          setSelectedOrder(ordData[0]);
-        }
+        setSelectedOrder((prev) => {
+          if (prev && ordData.some((o: Order) => o.id === prev.id)) {
+            return ordData.find((o: Order) => o.id === prev.id) ?? prev;
+          }
+          return ordData.length > 0 ? ordData[0] : null;
+        });
       }
 
       if (prodRes.ok) {
@@ -160,31 +162,33 @@ export default function DeliveryLogisticsPage({ themeId }: DeliveryLogisticsPage
   // Load backend data helper without initial loading override to avoid visual flicker during intervals
   const pollOrders = async () => {
     try {
-      const res = await apiFetch("/api/orders");
+      const res = await apiFetch(withThemeQuery("/api/orders", themeId));
       if (res.ok) {
-        const ordData = await res.json();
-        
-        // Let's identify if any order is genuinely NEW
-        setOrders(prevOrders => {
+        const ordData: Order[] = await res.json();
+
+        setOrders((prevOrders) => {
           if (prevOrders.length > 0 && ordData.length > prevOrders.length) {
-            // Find orders that are in ordData but not in prevOrders
-            const prevIds = new Set(prevOrders.map(o => o.id));
-            const newOrders = ordData.filter((o: any) => !prevIds.has(o.id));
+            const prevIds = new Set(prevOrders.map((o) => o.id));
+            const newOrders = ordData.filter((o) => !prevIds.has(o.id));
             if (newOrders.length > 0) {
               const newest = newOrders[0];
               setNotificationToast({
-                id: newest.id,
+                id: newest.id!,
                 client: newest.customer_name,
-                value: newest.total_value
+                value: newest.total_value,
               });
               playNotificationSound();
-              // Auto hide toast after 6 seconds
               setTimeout(() => {
                 setNotificationToast(null);
               }, 6000);
             }
           }
           return ordData;
+        });
+
+        setSelectedOrder((prev) => {
+          if (!prev) return prev;
+          return ordData.find((o) => o.id === prev.id) ?? prev;
         });
       }
     } catch (e) {

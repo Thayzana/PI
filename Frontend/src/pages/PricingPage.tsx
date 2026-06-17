@@ -123,11 +123,15 @@ export default function PricingPage({ onRecipeSaved, themeId }: PricingPageProps
     const updatedCosts = { ...costs, [key]: value };
     setCosts(updatedCosts);
     try {
-      await apiFetch("/api/invisible-costs", {
+      const res = await apiFetch("/api/invisible-costs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedCosts)
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        console.error("Erro ao sincronizar custos invisíveis:", err.error || res.status);
+      }
     } catch (e) {
       console.error("Erro ao sincronizar custos invisíveis:", e);
     }

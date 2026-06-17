@@ -8,6 +8,7 @@ interface InventoryPageProps {
   onProductsUpdated: () => void;
   loading: boolean;
   themeId: string;
+  globalSearch?: string;
 }
 
 function formatUnitLabel(unit?: UnitType): string {
@@ -17,7 +18,7 @@ function formatUnitLabel(unit?: UnitType): string {
   return unit.toLowerCase();
 }
 
-export default function InventoryPage({ products, onProductsUpdated, loading, themeId }: InventoryPageProps) {
+export default function InventoryPage({ products, onProductsUpdated, loading, themeId, globalSearch = "" }: InventoryPageProps) {
   const isRetail = isRetailSector(themeId);
   // Local list filter toggles
   const [filterType, setFilterType] = useState<"all" | "low" | "expiry">("all");
@@ -58,12 +59,11 @@ export default function InventoryPage({ products, onProductsUpdated, loading, th
 
   // Filter products based on search and toggled category
   const filteredProducts = products.filter(p => {
-    // Search query
-    const q = search.toLowerCase();
+    const q = (globalSearch || search).toLowerCase();
     const matchSearch =
       p.name.toLowerCase().includes(q) ||
       p.sku.toLowerCase().includes(q) ||
-      (p.barcode && p.barcode.includes(search.trim()));
+      (p.barcode && p.barcode.includes((globalSearch || search).trim()));
     
     // Category tabs
     if (filterType === "low") {
@@ -487,11 +487,11 @@ export default function InventoryPage({ products, onProductsUpdated, loading, th
                   const isLow = statusInfo.label === "Baixo";
                   
                   // Adjusting custom light status badges mapping colorClasses cleanly
-                  let badgeColors = "bg-emerald-50 text-emerald-600 border-emerald-150";
+                  let badgeColors = "bg-emerald-50 text-emerald-600 border-emerald-100";
                   if (isExpiringSoon) {
-                    badgeColors = "bg-rose-50 text-rose-600 border-rose-150";
+                    badgeColors = "bg-rose-50 text-rose-600 border-rose-100";
                   } else if (isLow) {
-                    badgeColors = "bg-amber-50 text-amber-600 border-amber-150";
+                    badgeColors = "bg-amber-50 text-amber-600 border-amber-100";
                   }
 
                   // Turn ISO date into Brazilian date string

@@ -334,7 +334,7 @@ export default function App() {
   const renderPage = () => {
     switch (activeTab) {
       case "assistant":
-        return <AssistantPage onNavigate={handleNavigate} />;
+        return <AssistantPage onNavigate={handleNavigate} isAdmin={adminUser} />;
       case "dashboard":
         return (
           <DashboardPage 
@@ -353,6 +353,7 @@ export default function App() {
             onProductsUpdated={fetchData}
             loading={loading}
             themeId={themeId}
+            globalSearch={searchQuery}
           />
         );
       case "suppliers":

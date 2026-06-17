@@ -42,7 +42,7 @@ export default function PromotionsPage({ onNavigateToMarketing, themeId }: Promo
       const res = await apiFetch(`/api/promotions/${promo.id}/apply`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ active: isActivating ? 1 : 0 })
+        body: JSON.stringify({ active: isActivating })
       });
 
       if (res.ok) {

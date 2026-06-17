@@ -25,8 +25,12 @@ export default function SettingsPage({ onResetDatabase, resetting, profile, onPr
 
   useEffect(() => {
     apiFetch("/api/settings/gemini-status")
-      .then((r) => r.json())
-      .then((d) => setGeminiConfigured(!!d.configured))
+      .then(async (r) => {
+        if (!r.ok) return false;
+        const d = await r.json();
+        return !!d.configured;
+      })
+      .then((configured) => setGeminiConfigured(configured))
       .catch(() => setGeminiConfigured(false));
   }, []);
 

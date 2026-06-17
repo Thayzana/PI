@@ -96,7 +96,7 @@ export default function MenuAdminPage({ themeId }: MenuAdminPageProps) {
     setName("");
     setPrice(0);
     setDescription("");
-    setCategory(isRetail ? "Mercearia" : "Bolos");
+    setCategory(isRetail ? "Moda Unissex" : "Bolos");
     setImageUrl("");
     setIsPromo(false);
     setPromoPrice(0);

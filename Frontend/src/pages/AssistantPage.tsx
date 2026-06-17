@@ -12,9 +12,10 @@ interface ChatMessage {
 
 interface AssistantPageProps {
   onNavigate: (tab: string, payload?: Record<string, unknown>) => void;
+  isAdmin?: boolean;
 }
 
-export default function AssistantPage({ onNavigate }: AssistantPageProps) {
+export default function AssistantPage({ onNavigate, isAdmin }: AssistantPageProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "model",
@@ -79,6 +80,7 @@ export default function AssistantPage({ onNavigate }: AssistantPageProps) {
   };
 
   const runAutomation = async () => {
+    if (!isAdmin) return;
     setAutoRunning(true);
     try {
       const res = await apiFetch("/api/automation/run", { method: "POST" });
@@ -95,6 +97,11 @@ export default function AssistantPage({ onNavigate }: AssistantPageProps) {
             fromAi: true,
           },
         ]);
+      } else {
+        setMessages((m) => [
+          ...m,
+          { role: "model", text: data.error || "Falha ao executar automação." },
+        ]);
       }
     } finally {
       setAutoRunning(false);
@@ -102,11 +109,11 @@ export default function AssistantPage({ onNavigate }: AssistantPageProps) {
   };
 
   useEffect(() => {
-    if (!autoMode) return;
+    if (!autoMode || !isAdmin) return;
     void runAutomation();
     const id = window.setInterval(() => void runAutomation(), 5 * 60 * 1000);
     return () => window.clearInterval(id);
-  }, [autoMode]);
+  }, [autoMode, isAdmin]);
 
   return (
     <div className="flex-1 p-6 md:p-8 overflow-y-auto bg-[#faf6f2] font-sans space-y-6" id="assistant-page">
@@ -122,13 +129,17 @@ export default function AssistantPage({ onNavigate }: AssistantPageProps) {
           <input
             type="checkbox"
             checked={autoMode}
+            disabled={!isAdmin}
             onChange={(e) => {
               setAutoMode(e.target.checked);
               setAutoModeEnabled(e.target.checked);
             }}
-            className="accent-[#b3543d]"
+            className="accent-[#b3543d] disabled:opacity-50"
           />
           Modo automático (simulação)
+          {!isAdmin && (
+            <span className="text-[10px] font-normal text-[#7d6f6b]">(somente admin)</span>
+          )}
         </label>
       </div>
 
