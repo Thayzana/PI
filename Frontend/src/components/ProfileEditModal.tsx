@@ -128,6 +128,13 @@ export default function ProfileEditModal({
             onChange={(v) => setDraft((d) => ({ ...d, phone: v }))}
             placeholder="5563999999999"
           />
+          <Field
+            icon={<Building size={14} />}
+            label="Endereço da loja (origem delivery)"
+            value={draft.storeAddress || ""}
+            onChange={(v) => setDraft((d) => ({ ...d, storeAddress: v }))}
+            placeholder="Rua, número, bairro, cidade, UF, CEP"
+          />
 
           <div className="flex gap-2 pt-2">
             <button

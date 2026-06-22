@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { 
   Truck, 
   Package, 
@@ -28,6 +28,13 @@ import { Order, OrderItem, Product } from "../types";
 import { withThemeQuery, apiFetch } from "../lib/api";
 import { DEFAULT_PAGE_SIZE, paginateItems } from "../lib/pagination";
 import PaginationControls from "../components/PaginationControls";
+import {
+  fetchDeliveryEstimate,
+  hasMinimumAddress,
+  estimateSourceLabel,
+  type DeliveryEstimate,
+} from "../lib/deliveryEstimate";
+import { loadProfile } from "../lib/profile";
 
 interface DeliveryLogisticsPageProps {
   themeId: string;
@@ -73,6 +80,11 @@ export default function DeliveryLogisticsPage({ themeId }: DeliveryLogisticsPage
   const [numero, setNumero] = useState("");
   const [complemento, setComplemento] = useState("");
   const [estimatedTime, setEstimatedTime] = useState("40-50 min");
+  const [estimateManual, setEstimateManual] = useState(false);
+  const [loadingEstimate, setLoadingEstimate] = useState(false);
+  const [deliveryEstimate, setDeliveryEstimate] = useState<DeliveryEstimate | null>(null);
+  const [estimateError, setEstimateError] = useState<string | null>(null);
+  const estimateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Delivery Rate Calculation Rules
   const [rateMethod, setRateMethod] = useState<"fixed" | "mileage">("fixed");
@@ -216,6 +228,77 @@ export default function DeliveryLogisticsPage({ themeId }: DeliveryLogisticsPage
   useEffect(() => {
     setOrdersPage(1);
   }, [searchQuery, statusFilter, themeId]);
+
+  const refreshDeliveryEstimate = useCallback(async () => {
+    if (orderType !== "Delivery") return;
+
+    const parts = { rua, numero, bairro, cidade, estado, cep };
+    if (!hasMinimumAddress(parts)) {
+      setDeliveryEstimate(null);
+      setEstimateError(null);
+      return;
+    }
+
+    setLoadingEstimate(true);
+    setEstimateError(null);
+
+    try {
+      const profile = loadProfile();
+      const estimate = await fetchDeliveryEstimate(parts, profile.storeAddress);
+      setDeliveryEstimate(estimate);
+      if (!estimateManual) {
+        setEstimatedTime(estimate.estimatedTime);
+      }
+      if (rateMethod === "mileage") {
+        setMileageDistance(Math.max(0.5, estimate.distanceKm));
+      }
+    } catch (err) {
+      setDeliveryEstimate(null);
+      setEstimateError(
+        err instanceof Error ? err.message : "Falha ao calcular rota."
+      );
+    } finally {
+      setLoadingEstimate(false);
+    }
+  }, [
+    orderType,
+    rua,
+    numero,
+    bairro,
+    cidade,
+    estado,
+    cep,
+    estimateManual,
+    rateMethod,
+  ]);
+
+  useEffect(() => {
+    if (orderType !== "Delivery" || estimateManual) return;
+
+    if (estimateTimerRef.current) {
+      clearTimeout(estimateTimerRef.current);
+    }
+
+    estimateTimerRef.current = setTimeout(() => {
+      void refreshDeliveryEstimate();
+    }, 700);
+
+    return () => {
+      if (estimateTimerRef.current) {
+        clearTimeout(estimateTimerRef.current);
+      }
+    };
+  }, [
+    orderType,
+    rua,
+    numero,
+    bairro,
+    cidade,
+    estado,
+    cep,
+    estimateManual,
+    refreshDeliveryEstimate,
+  ]);
 
   // Handler for Cep lookup
   const handleCepLookup = async (cepVal: string) => {
@@ -425,6 +508,10 @@ export default function DeliveryLogisticsPage({ themeId }: DeliveryLogisticsPage
     setDriverPhone("");
     setTransportObs("");
     setEstimatedTime("40-50 min");
+    setEstimateManual(false);
+    setDeliveryEstimate(null);
+    setEstimateError(null);
+    setLoadingEstimate(false);
   };
 
   // Get status color templates
@@ -861,9 +948,55 @@ export default function DeliveryLogisticsPage({ themeId }: DeliveryLogisticsPage
                     </div>
 
                     {selectedOrder.estimated_time && (
-                      <div className="flex items-center gap-1.5 border-t border-[#eee7de]/50 pt-2 text-[11px] text-gray-500 font-bold">
-                        <Clock size={12} className="text-gray-400" />
-                        <span>Estimativa de Envio: {selectedOrder.estimated_time}</span>
+                      <div className="flex flex-col gap-2 border-t border-[#eee7de]/50 pt-2 text-[11px] text-gray-500 font-bold">
+                        <div className="flex items-center gap-1.5">
+                          <Clock size={12} className="text-gray-400" />
+                          <span>Estimativa de Envio: {selectedOrder.estimated_time}</span>
+                        </div>
+                        {selectedOrder.rua && selectedOrder.cidade && (
+                          <div className="flex flex-wrap gap-2">
+                            <a
+                              href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+                                [
+                                  selectedOrder.rua,
+                                  selectedOrder.numero,
+                                  selectedOrder.bairro,
+                                  selectedOrder.cidade,
+                                  selectedOrder.estado,
+                                  selectedOrder.cep,
+                                  "Brasil",
+                                ]
+                                  .filter(Boolean)
+                                  .join(", ")
+                              )}&travelmode=driving`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white border border-[#eee7de] text-[10px] text-brand hover:bg-brand/5"
+                            >
+                              <Route size={11} />
+                              Google Maps
+                            </a>
+                            <a
+                              href={`https://waze.com/ul?q=${encodeURIComponent(
+                                [
+                                  selectedOrder.rua,
+                                  selectedOrder.numero,
+                                  selectedOrder.bairro,
+                                  selectedOrder.cidade,
+                                  selectedOrder.estado,
+                                ]
+                                  .filter(Boolean)
+                                  .join(", ")
+                              )}&navigate=yes`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white border border-[#eee7de] text-[10px] text-brand hover:bg-brand/5"
+                            >
+                              <Route size={11} />
+                              Waze
+                            </a>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1269,18 +1402,95 @@ export default function DeliveryLogisticsPage({ themeId }: DeliveryLogisticsPage
 
                   {/* Estimation Time row */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-[#7d6f6b]">Estimativa de Tempo de Envio</label>
-                      <select
-                        value={estimatedTime}
-                        onChange={(e) => setEstimatedTime(e.target.value)}
-                        className="w-full bg-[#faf6f2] border border-[#eee7de] rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-brand"
-                      >
-                        <option value="30-40 min">⚡ Super Rápido (30-40 min)</option>
-                        <option value="40-50 min">📦 Normal (40-50 min)</option>
-                        <option value="50-60 min">⏳ Conservadora (50-60 min)</option>
-                        <option value="60-75 min">🕑 Agendado (60-75 min)</option>
-                      </select>
+                    <div className="space-y-1 md:col-span-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <label className="text-xs font-bold text-[#7d6f6b]">
+                          Estimativa de Tempo de Envio
+                        </label>
+                        <label className="inline-flex items-center gap-1.5 text-[10px] text-gray-500 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={estimateManual}
+                            onChange={(e) => {
+                              setEstimateManual(e.target.checked);
+                              if (!e.target.checked && deliveryEstimate) {
+                                setEstimatedTime(deliveryEstimate.estimatedTime);
+                              }
+                            }}
+                            className="rounded text-brand focus:ring-brand"
+                          />
+                          Ajuste manual
+                        </label>
+                      </div>
+
+                      {estimateManual ? (
+                        <select
+                          value={estimatedTime}
+                          onChange={(e) => setEstimatedTime(e.target.value)}
+                          className="w-full bg-[#faf6f2] border border-[#eee7de] rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-brand"
+                        >
+                          <option value="30-40 min">⚡ Super Rápido (30-40 min)</option>
+                          <option value="40-50 min">📦 Normal (40-50 min)</option>
+                          <option value="50-60 min">⏳ Conservadora (50-60 min)</option>
+                          <option value="60-75 min">🕑 Agendado (60-75 min)</option>
+                        </select>
+                      ) : (
+                        <div className="w-full bg-[#faf6f2] border border-[#eee7de] rounded-xl px-3 py-2.5 text-xs flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            {loadingEstimate ? (
+                              <Loader2 size={14} className="animate-spin text-brand shrink-0" />
+                            ) : (
+                              <Clock size={14} className="text-brand shrink-0" />
+                            )}
+                            <span className="font-bold text-[#2e2624] truncate">
+                              {loadingEstimate
+                                ? "Calculando rota..."
+                                : estimatedTime || "Informe o endereço completo"}
+                            </span>
+                          </div>
+                          {deliveryEstimate && !loadingEstimate && (
+                            <span className="text-[10px] text-gray-400 shrink-0">
+                              {deliveryEstimate.distanceKm} km •{" "}
+                              {estimateSourceLabel(deliveryEstimate.source)}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {deliveryEstimate && !estimateManual && !loadingEstimate && (
+                        <div className="flex flex-wrap items-center gap-2 pt-1">
+                          <span className="text-[10px] text-gray-500">
+                            {deliveryEstimate.drivingMinutes} min de deslocamento +{" "}
+                            {deliveryEstimate.prepBufferMinutes} min de preparo
+                          </span>
+                          <a
+                            href={deliveryEstimate.googleMapsUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white border border-[#eee7de] text-[10px] font-bold text-brand hover:bg-brand/5"
+                          >
+                            <Route size={11} />
+                            Abrir no Google Maps
+                          </a>
+                          <a
+                            href={deliveryEstimate.wazeUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white border border-[#eee7de] text-[10px] font-bold text-brand hover:bg-brand/5"
+                          >
+                            <Route size={11} />
+                            Abrir no Waze
+                          </a>
+                        </div>
+                      )}
+
+                      {estimateError && !estimateManual && (
+                        <p className="text-[10px] text-amber-700 flex items-center gap-1">
+                          <AlertCircle size={12} />
+                          {estimateError}. Configure o endereço da loja em Configurações → Perfil
+                          ou `STORE_ORIGIN_ADDRESS` no backend.
+                        </p>
+                      )}
                     </div>
                   </div>
 

@@ -6,6 +6,8 @@ export interface UserProfile {
   avatarUrl: string;
   /** WhatsApp da loja (apenas dígitos ou formatado) — usado em "Fale conosco" */
   phone?: string;
+  /** Endereço completo da loja — origem das rotas de delivery */
+  storeAddress?: string;
 }
 
 const PROFILE_KEY = "gestify_profile";

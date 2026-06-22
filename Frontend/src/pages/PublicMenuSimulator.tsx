@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { 
   ShoppingBag, 
   MapPin, 
@@ -18,11 +18,17 @@ import {
   Search,
   CheckCircle,
   Loader2,
-  Info
+  Info,
+  Clock
 } from "lucide-react";
 import { Product, Order, OrderItem, isRetailSector } from "../types";
 import { withThemeQuery, apiFetch } from "../lib/api";
 import { sortByNamePt } from "../lib/sort";
+import { useInfiniteScroll } from "../lib/useInfiniteScroll";
+import {
+  fetchDeliveryEstimate,
+  hasMinimumAddress,
+} from "../lib/deliveryEstimate";
 
 interface PublicMenuSimulatorProps {
   themeId: string;
@@ -61,14 +67,72 @@ export default function PublicMenuSimulator({ themeId, standalone = false }: Pub
   const [loadingCep, setLoadingCep] = useState(false);
   
   // Delivery Fee
-  const [deliveryFee, setDeliveryFee] = useState<number>(8.00); 
+  const [deliveryFee, setDeliveryFee] = useState<number>(8.00);
+  const [estimatedDeliveryTime, setEstimatedDeliveryTime] = useState("40-50 min");
+  const [loadingEstimate, setLoadingEstimate] = useState(false);
+  const estimateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Success screen details
   const [placedOrderId, setPlacedOrderId] = useState<number | null>(null);
 
-  const [visibleCount, setVisibleCount] = useState(CATALOG_PAGE_SIZE);
-  const scrollRootRef = useRef<HTMLDivElement>(null);
-  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const filteredProducts = sortByNamePt(
+    products.filter((p) => {
+      const matchesSearch =
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase()));
+
+      if (selectedCategory === "Todos") return matchesSearch;
+      return matchesSearch && p.category === selectedCategory;
+    })
+  );
+
+  const {
+    scrollRootRef,
+    loadMoreRef,
+    visibleItems,
+    hasMore,
+  } = useInfiniteScroll({
+    pageSize: CATALOG_PAGE_SIZE,
+    totalItems: filteredProducts.length,
+    resetDeps: [searchQuery, selectedCategory, themeId],
+  });
+
+  const visibleProducts = visibleItems(filteredProducts);
+
+  const refreshDeliveryEstimate = useCallback(async () => {
+    if (checkoutType !== "Delivery") return;
+
+    const parts = { rua, numero, bairro, cidade, estado, cep };
+    if (!hasMinimumAddress(parts)) return;
+
+    setLoadingEstimate(true);
+    try {
+      const estimate = await fetchDeliveryEstimate(parts);
+      setEstimatedDeliveryTime(estimate.estimatedTime);
+    } catch {
+      setEstimatedDeliveryTime("40-50 min");
+    } finally {
+      setLoadingEstimate(false);
+    }
+  }, [checkoutType, rua, numero, bairro, cidade, estado, cep]);
+
+  useEffect(() => {
+    if (checkoutType !== "Delivery") return;
+
+    if (estimateTimerRef.current) {
+      clearTimeout(estimateTimerRef.current);
+    }
+
+    estimateTimerRef.current = setTimeout(() => {
+      void refreshDeliveryEstimate();
+    }, 700);
+
+    return () => {
+      if (estimateTimerRef.current) {
+        clearTimeout(estimateTimerRef.current);
+      }
+    };
+  }, [checkoutType, rua, numero, bairro, cidade, estado, cep, refreshDeliveryEstimate]);
 
   const loadCardapio = async () => {
     try {
@@ -94,44 +158,6 @@ export default function PublicMenuSimulator({ themeId, standalone = false }: Pub
   useEffect(() => {
     loadCardapio();
   }, [themeId]);
-
-  useEffect(() => {
-    setVisibleCount(CATALOG_PAGE_SIZE);
-  }, [searchQuery, selectedCategory, themeId, products.length]);
-
-  const filteredProducts = sortByNamePt(
-    products.filter((p) => {
-      const matchesSearch =
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase()));
-
-      if (selectedCategory === "Todos") return matchesSearch;
-      return matchesSearch && p.category === selectedCategory;
-    })
-  );
-
-  const visibleProducts = filteredProducts.slice(0, visibleCount);
-  const hasMoreProducts = visibleCount < filteredProducts.length;
-
-  useEffect(() => {
-    const root = scrollRootRef.current;
-    const target = loadMoreRef.current;
-    if (!root || !target || !hasMoreProducts) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) {
-          setVisibleCount((current) =>
-            Math.min(current + CATALOG_PAGE_SIZE, filteredProducts.length)
-          );
-        }
-      },
-      { root, rootMargin: "100px", threshold: 0.1 }
-    );
-
-    observer.observe(target);
-    return () => observer.disconnect();
-  }, [hasMoreProducts, filteredProducts.length, visibleCount]);
 
   const handleCepLookup = async (cepVal: string) => {
     const rawCep = cepVal.replace(/\D/g, "");
@@ -240,7 +266,7 @@ export default function PublicMenuSimulator({ themeId, standalone = false }: Pub
       estado: isDelivery ? estado : "",
       numero: isDelivery ? numero : "",
       complemento: isDelivery ? complemento : "",
-      estimated_time: isDelivery ? "40-50 min" : "Imediato",
+      estimated_time: isDelivery ? estimatedDeliveryTime : "Imediato",
       driver_name: "",
       driver_type: "Próprio",
       driver_phone: "",
@@ -438,13 +464,13 @@ export default function PublicMenuSimulator({ themeId, standalone = false }: Pub
                     );
                   })}
                 </div>
-                {hasMoreProducts && (
+                {hasMore && (
                   <div ref={loadMoreRef} className="py-4 text-center">
                     <Loader2 className="animate-spin mx-auto text-brand mb-1" size={18} />
                     <p className="text-[10px] text-gray-400">Carregando mais itens…</p>
                   </div>
                 )}
-                {!hasMoreProducts && filteredProducts.length > CATALOG_PAGE_SIZE && (
+                {!hasMore && filteredProducts.length > CATALOG_PAGE_SIZE && (
                   <p className="text-center text-[10px] text-gray-400 py-2">Você viu todos os itens</p>
                 )}
                 </>
@@ -614,6 +640,16 @@ export default function PublicMenuSimulator({ themeId, standalone = false }: Pub
                       </span>
                     </div>
 
+                    <div className="flex items-center justify-between text-[11px] text-[#7d6f6b]">
+                      <span className="flex items-center gap-1 font-bold">
+                        <Clock size={12} className="text-brand shrink-0" />
+                        Tempo estimado:
+                      </span>
+                      <span className="font-bold text-gray-900">
+                        {loadingEstimate ? "Calculando..." : estimatedDeliveryTime}
+                      </span>
+                    </div>
+
                   </div>
                 )}
 
@@ -716,7 +752,7 @@ export default function PublicMenuSimulator({ themeId, standalone = false }: Pub
 
               <div className="bg-gray-50 p-4 border border-gray-150 rounded-xl leading-relaxed text-[10px] text-gray-500 text-left space-y-2">
                 <p className="font-black text-[#2e2624] block border-b pb-1.5">Informações Úteis:</p>
-                <p>• ⏱️ <b>Tempo Estimado:</b> {checkoutType === "Delivery" ? "40 a 50 minutos para entrega" : "Balcão - Imediato para retirada"}.</p>
+                <p>• ⏱️ <b>Tempo Estimado:</b> {checkoutType === "Delivery" ? `${estimatedDeliveryTime.replace("-", " a ")} para entrega` : "Balcão - Imediato para retirada"}.</p>
                 <p>• 🏪 <b>Forma de Pagamento:</b> {paymentMethod} (acertado na entrega/retirada).</p>
                 <p>• 🔊 <b>Notificação:</b> O painel de expedição do confeiteiro já disparou um sinal sonoro de recebimento automático!</p>
               </div>
