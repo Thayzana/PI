@@ -1,8 +1,10 @@
 import { useState, useEffect, useMemo } from "react";
-import { Tag, Printer, QrCode, Apple } from "lucide-react";
+import { Tag, Printer, QrCode, Apple, Search } from "lucide-react";
 import { NutritionalFacts, Recipe } from "../types";
 import { loadProfile, getProfileInitials } from "../lib/profile";
 import { apiFetch } from "../lib/api";
+import { DEFAULT_PAGE_SIZE, paginateItems } from "../lib/pagination";
+import PaginationControls from "../components/PaginationControls";
 
 type LabelMode = "sanitary" | "nutritional";
 
@@ -25,6 +27,8 @@ export default function LabelPage() {
 
   const [labelMode, setLabelMode] = useState<LabelMode>("sanitary");
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [recipeSearch, setRecipeSearch] = useState("");
+  const [recipePage, setRecipePage] = useState(1);
   const [nutrition, setNutrition] = useState<NutritionalFacts>(DEFAULT_NUTRITION);
 
   const [productName, setProductName] = useState("Brigadeiro Gourmet");
@@ -54,6 +58,11 @@ export default function LabelPage() {
     const todayNum = new Date().toISOString().split("T")[0].replace(/-/g, "").slice(2, 6);
     setLot(`${abbreviation}-${todayNum}-${Math.floor(10 + Math.random() * 90)}`);
   };
+
+  const filteredRecipes = recipes.filter((r) =>
+    r.name.toLowerCase().includes(recipeSearch.toLowerCase())
+  );
+  const paginatedRecipes = paginateItems(filteredRecipes, recipePage, DEFAULT_PAGE_SIZE);
 
   const formattedDate = (rawStr: string) => {
     if (!rawStr) return "";
@@ -283,19 +292,43 @@ export default function LabelPage() {
             
             {/* Quick preset dropdown selection */}
             {recipes.length > 0 && (
-              <div>
+              <div className="space-y-2">
                 <label className="text-[10px] uppercase font-bold text-[#7d6f6b]">Preencher com receita salva</label>
-                <select
-                  id="label-recipe-filler-dropdown"
-                  onChange={(e) => handleSelectRecipePreset(e.target.value)}
-                  className="w-full mt-1 bg-[#faf7f2] border border-[#e5dec9]/60 px-3.5 py-2 rounded-xl text-xs font-semibold text-[#2e2624] cursor-pointer focus:outline-none focus:border-[#b3543d]"
-                  defaultValue=""
-                >
-                  <option value="" disabled>Selecione um produto gravado...</option>
-                  {recipes.map((r) => (
-                    <option key={r.id} value={r.name}>{r.name}</option>
+                <div className="relative">
+                  <Search className="absolute left-3 top-2.5 text-gray-400" size={13} />
+                  <input
+                    type="text"
+                    placeholder="Buscar receita..."
+                    value={recipeSearch}
+                    onChange={(e) => {
+                      setRecipeSearch(e.target.value);
+                      setRecipePage(1);
+                    }}
+                    className="w-full mt-1 bg-[#faf7f2] border border-[#e5dec9]/60 pl-9 pr-3 py-2 rounded-xl text-xs focus:outline-none focus:border-[#b3543d]"
+                  />
+                </div>
+                <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto">
+                  {paginatedRecipes.map((r) => (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => handleSelectRecipePreset(r.name)}
+                      className={`text-[10px] px-2.5 py-1 rounded-lg border font-bold cursor-pointer transition-all ${
+                        productName === r.name
+                          ? "bg-brand text-white border-brand"
+                          : "bg-white text-gray-600 border-gray-200 hover:border-brand/40"
+                      }`}
+                    >
+                      {r.name}
+                    </button>
                   ))}
-                </select>
+                </div>
+                <PaginationControls
+                  page={recipePage}
+                  pageSize={DEFAULT_PAGE_SIZE}
+                  totalItems={filteredRecipes.length}
+                  onPageChange={setRecipePage}
+                />
               </div>
             )}
 

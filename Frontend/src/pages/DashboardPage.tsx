@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { 
   AreaChart, 
   Area, 
@@ -13,12 +13,12 @@ import {
   AlertTriangle, 
   Clock, 
   ArrowRight,
-  TrendingDown,
-  Percent,
   Sparkles
 } from "lucide-react";
 import { DashboardStats, isRetailSector } from "../types";
 import InsightPanel from "../components/InsightPanel";
+import { DEFAULT_PAGE_SIZE, paginateItems } from "../lib/pagination";
+import PaginationControls from "../components/PaginationControls";
 
 interface DashboardPageProps {
   stats: DashboardStats | null;
@@ -29,6 +29,9 @@ interface DashboardPageProps {
 
 export default function DashboardPage({ stats, loading, themeId = "confeitaria", onNavigate }: DashboardPageProps) {
   const isRetail = isRetailSector(themeId);
+  const [topSoldPage, setTopSoldPage] = useState(1);
+  const [inactivePage, setInactivePage] = useState(1);
+
   if (loading || !stats) {
     return (
       <div className="flex-1 flex flex-col justify-center items-center h-full bg-[#faf6f2] space-y-4 font-sans">
@@ -40,6 +43,9 @@ export default function DashboardPage({ stats, loading, themeId = "confeitaria",
 
   // Find max value in chart to provide nice padding
   const maxRevenue = Math.max(...stats.sales_chart.map(d => d.revenue), 3500);
+  const paginatedTopSold = paginateItems(stats.top_sold, topSoldPage, DEFAULT_PAGE_SIZE);
+  const paginatedInactive = paginateItems(stats.inactive_products, inactivePage, DEFAULT_PAGE_SIZE);
+  const topSoldOffset = (topSoldPage - 1) * DEFAULT_PAGE_SIZE;
 
   return (
     <div className="flex-1 p-8 overflow-y-auto bg-[#faf6f2] text-[#2c2221] font-sans space-y-6" id="dashboard-page">
@@ -217,16 +223,17 @@ export default function DashboardPage({ stats, loading, themeId = "confeitaria",
             <p className="text-xs text-[#7d6f6b] mb-6">Unidades vendidas nesta semana ativa</p>
             
             <div className="space-y-4">
-              {stats.top_sold.map((item, index) => {
-                const maxVal = stats.top_sold[0].sales;
+              {paginatedTopSold.map((item, index) => {
+                const maxVal = stats.top_sold[0]?.sales || 1;
                 const pct = (item.sales / maxVal) * 105;
                 const finalPct = Math.min(pct, 100);
+                const rank = topSoldOffset + index + 1;
                 return (
                   <div key={item.id} className="space-y-1.5" id={`top-sold-${index}`}>
                     <div className="flex justify-between text-xs font-semibold">
                       <div className="flex items-center gap-2 text-[#2e2624]">
                         <span className="w-5 h-5 rounded-full bg-[#faf7f2] flex items-center justify-center text-[10px] font-bold text-[#b3543d]">
-                          {index + 1}
+                          {rank}
                         </span>
                         <span>{item.name}</span>
                       </div>
@@ -243,6 +250,13 @@ export default function DashboardPage({ stats, loading, themeId = "confeitaria",
                 );
               })}
             </div>
+            <PaginationControls
+              page={topSoldPage}
+              pageSize={DEFAULT_PAGE_SIZE}
+              totalItems={stats.top_sold.length}
+              onPageChange={setTopSoldPage}
+              className="mt-4"
+            />
           </div>
 
           <button 
@@ -266,8 +280,8 @@ export default function DashboardPage({ stats, loading, themeId = "confeitaria",
             <p className="text-xs text-[#7d6f6b] mb-6 font-sans">Sugestões de promoções preventivas baseadas em inteligência de inventário</p>
             
             <div className="divide-y divide-[#eee7de]">
-              {stats.inactive_products.map((p, idx) => (
-                <div key={idx} className="flex justify-between items-center py-3.5 first:pt-0 last:pb-0">
+              {paginatedInactive.map((p, idx) => (
+                <div key={`${p.name}-${idx}`} className="flex justify-between items-center py-3.5 first:pt-0 last:pb-0">
                   <div className="space-y-0.5">
                     <h5 className="text-sm font-semibold text-[#2e2624]">{p.name}</h5>
                     <p className="text-xs text-[#7d6f6b]">
@@ -284,6 +298,13 @@ export default function DashboardPage({ stats, loading, themeId = "confeitaria",
                 </div>
               ))}
             </div>
+            <PaginationControls
+              page={inactivePage}
+              pageSize={DEFAULT_PAGE_SIZE}
+              totalItems={stats.inactive_products.length}
+              onPageChange={setInactivePage}
+              className="mt-4"
+            />
           </div>
         </div>
 

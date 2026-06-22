@@ -248,7 +248,7 @@ export default function PublicMenuSimulator({ themeId, standalone = false }: Pub
     };
 
     try {
-      const res = await apiFetch("/api/orders", {
+      const res = await apiFetch(withThemeQuery("/api/orders", themeId), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)

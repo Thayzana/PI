@@ -4,8 +4,6 @@ import {
   Plus, 
   Search, 
   TrendingDown, 
-  QrCode, 
-  Download, 
   Edit3, 
   Trash2, 
   Save, 
@@ -15,10 +13,10 @@ import {
   Layers,
   AlertCircle,
   Sparkles,
-  Link as LinkIcon,
   ChevronsRight,
   ExternalLink
 } from "lucide-react";
+import QrCodeCard from "../components/QrCodeCard";
 import { Product, UNIT_TYPE_OPTIONS, UnitType, isRetailSector } from "../types";
 import { withThemeQuery, apiFetch } from "../lib/api";
 import { sortByNamePt } from "../lib/sort";
@@ -69,7 +67,6 @@ export default function MenuAdminPage({ themeId }: MenuAdminPageProps) {
   const [listPage, setListPage] = useState(1);
 
   const publicMenuUrl = getPublicMenuUrl(themeId);
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(publicMenuUrl)}`;
 
   const loadProducts = async () => {
     try {
@@ -324,54 +321,7 @@ export default function MenuAdminPage({ themeId }: MenuAdminPageProps) {
         {/* Left column - Lists & QR Code element */}
         <div className="lg:col-span-7 space-y-6">
           
-          {/* QR Code Presentation Box */}
-          <div className="bg-white rounded-2xl border border-[#eee7de] shadow-2xs p-5 flex flex-col sm:flex-row items-center gap-5">
-            <div className="bg-[#fad6cc]/20 p-4 rounded-2xl flex items-center justify-center shrink-0 border border-brand/10">
-              <img 
-                src={qrCodeUrl} 
-                alt="Cardápio Digital QR Code" 
-                className="w-28 h-28 mix-blend-multiply" 
-                crossOrigin="anonymous"
-              />
-            </div>
-            
-            <div className="space-y-2 text-center sm:text-left flex-1">
-              <span className="inline-flex items-center gap-1 bg-[#faf0ed] text-brand border border-[#faf0ed] text-[9px] font-black uppercase tracking-wider py-1 px-2 rounded-md">
-                <QrCode size={12} />
-                Mesa & Delivery Conectado
-              </span>
-              <h4 className="text-xs font-black text-[#2e2624]">
-                Link do seu Cardápio Digital
-              </h4>
-              <p className="text-[10px] text-[#7d6f6b] max-w-sm line-clamp-1 border-b border-gray-100 pb-2">
-                {publicMenuUrl}
-              </p>
-              
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
-                <a
-                  href={qrCodeUrl}
-                  download="qrcode_gestify_cardapio.png"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="bg-brand hover:bg-brand-hover text-white text-[10px] font-black px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
-                >
-                  <Download size={12} />
-                  Baixar QR Code (PNG)
-                </a>
-                
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(publicMenuUrl);
-                    showToast("Link copiado para a área de transferência!", "success");
-                  }}
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-[10px] font-black px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5 transition-all cursor-pointer"
-                >
-                  <LinkIcon size={12} />
-                  Copiar Link
-                </button>
-              </div>
-            </div>
-          </div>
+          <QrCodeCard menuUrl={publicMenuUrl} onToast={showToast} />
 
           {/* Cards & Items Listing section */}
           <div className="bg-white rounded-2xl border border-[#eee7de] shadow-2xs overflow-hidden">

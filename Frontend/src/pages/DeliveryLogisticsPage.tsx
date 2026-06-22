@@ -58,6 +58,9 @@ export default function DeliveryLogisticsPage({ themeId }: DeliveryLogisticsPage
   // Products selection in form
   const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [selectedProductQty, setSelectedProductQty] = useState<number>(1);
+  const [productSearch, setProductSearch] = useState("");
+  const [productPickerPage, setProductPickerPage] = useState(1);
+  const [addedItemsPage, setAddedItemsPage] = useState(1);
   const [addedItems, setAddedItems] = useState<OrderItem[]>([]);
   
   // Delivery address & location
@@ -244,36 +247,36 @@ export default function DeliveryLogisticsPage({ themeId }: DeliveryLogisticsPage
     }
   };
 
-  // Add order item inside modal
-  const handleAddItem = () => {
-    if (!selectedProductId) return;
-    const prod = products.find(p => p.id === Number(selectedProductId));
+  const handleAddItem = (productId?: number) => {
+    const id = productId ?? Number(selectedProductId);
+    if (!id) return;
+    const prod = products.find((p) => p.id === id);
     if (!prod) return;
 
-    // Check if item already exists in list
-    const existingIndex = addedItems.findIndex(i => i.id === prod.id);
+    const unitPrice =
+      prod.is_promo && prod.promo_price
+        ? prod.promo_price
+        : prod.price && prod.price > 0
+          ? prod.price
+          : 8.5;
+
+    const existingIndex = addedItems.findIndex((i) => i.id === prod.id);
     if (existingIndex !== -1) {
       const updated = [...addedItems];
       updated[existingIndex].quantity += selectedProductQty;
       setAddedItems(updated);
     } else {
-      // Hardcode price approximation based on common bakery prices or get recipe final price
-      // We will look for recipe details or fallback to default pricing: R$ 5.60 for Brigadeiro, etc.
-      let mockedPrice = 8.50; 
-      if (prod.name.includes("Brigadeiro")) mockedPrice = 5.60;
-      if (prod.name.includes("Bolo de Pote")) mockedPrice = 12.00;
-      if (prod.name.includes("Cheesecake")) mockedPrice = 85.00;
-      if (prod.name.includes("Red Velvet")) mockedPrice = 15.00;
-      if (prod.name.includes("Trufa")) mockedPrice = 7.50;
-      if (prod.name.includes("Macaron")) mockedPrice = 9.00;
-
-      setAddedItems([...addedItems, {
-        id: prod.id || 0,
-        name: prod.name,
-        quantity: selectedProductQty,
-        price: mockedPrice
-      }]);
+      setAddedItems([
+        ...addedItems,
+        {
+          id: prod.id || 0,
+          name: prod.name,
+          quantity: selectedProductQty,
+          price: unitPrice,
+        },
+      ]);
     }
+    setSelectedProductId(String(prod.id));
     setSelectedProductQty(1);
   };
 
@@ -336,7 +339,7 @@ export default function DeliveryLogisticsPage({ themeId }: DeliveryLogisticsPage
     };
 
     try {
-      const res = await apiFetch("/api/orders", {
+      const res = await apiFetch(withThemeQuery("/api/orders", themeId), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(orderPayload)
@@ -461,6 +464,22 @@ export default function DeliveryLogisticsPage({ themeId }: DeliveryLogisticsPage
   });
 
   const paginatedOrders = paginateItems(filteredOrders, ordersPage, DEFAULT_PAGE_SIZE);
+
+  const filteredPickerProducts = products.filter((p) => {
+    const q = productSearch.toLowerCase();
+    return (
+      p.name.toLowerCase().includes(q) ||
+      p.sku.toLowerCase().includes(q) ||
+      (p.barcode && p.barcode.includes(productSearch.trim()))
+    );
+  });
+  const paginatedPickerProducts = paginateItems(
+    filteredPickerProducts,
+    productPickerPage,
+    DEFAULT_PAGE_SIZE
+  );
+  const paginatedAddedItems = paginateItems(addedItems, addedItemsPage, DEFAULT_PAGE_SIZE);
+  const addedItemsOffset = (addedItemsPage - 1) * DEFAULT_PAGE_SIZE;
 
   // Calculate stats values
   const totalOrdersCount = orders.length;
@@ -1040,42 +1059,77 @@ export default function DeliveryLogisticsPage({ themeId }: DeliveryLogisticsPage
               {/* Products Picker list row */}
               <div className="space-y-3 border-t border-gray-100 pt-5">
                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">2. Ingressar Produtos no Pedido</span>
-                
-                <div className="bg-gray-50 p-3 rounded-xl border border-gray-150 grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
-                  <div className="md:col-span-2 space-y-1">
-                    <label className="text-[11px] font-bold text-[#7d6f6b]">Buscar Produto Cadastrado</label>
-                    <select
-                      value={selectedProductId}
-                      onChange={(e) => setSelectedProductId(e.target.value)}
-                      className="w-full bg-white border border-[#eee7de] rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-brand"
-                    >
-                      <option value="">Selecione um produto...</option>
-                      {products.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name} (Qtd: {p.stock})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
 
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-[#7d6f6b]">Qtde</label>
-                    <input
-                      type="number"
-                      min={1}
-                      value={selectedProductQty}
-                      onChange={(e) => setSelectedProductQty(Number(e.target.value))}
-                      className="w-full bg-white border border-[#eee7de] rounded-lg px-2.5 py-1.5 text-xs text-[#2c2221] focus:outline-none focus:border-brand"
-                    />
-                  </div>
+                <div className="relative">
+                  <Search className="absolute left-3 top-2.5 text-gray-400" size={14} />
+                  <input
+                    type="text"
+                    placeholder="Buscar produto por nome, SKU ou código de barras..."
+                    value={productSearch}
+                    onChange={(e) => {
+                      setProductSearch(e.target.value);
+                      setProductPickerPage(1);
+                    }}
+                    className="w-full bg-white border border-[#eee7de] rounded-lg pl-9 pr-3 py-2 text-xs focus:outline-none focus:border-brand"
+                  />
+                </div>
 
-                  <button
-                    type="button"
-                    onClick={handleAddItem}
-                    className="bg-[#faf6f2] hover:bg-brand hover:text-white border border-brand/50 text-brand py-1.5 text-xs font-bold rounded-lg cursor-pointer transition-all uppercase"
-                  >
-                    Adicionar
-                  </button>
+                <div className="bg-gray-50 p-3 rounded-xl border border-gray-150 space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                    <div className="md:col-span-3 space-y-1">
+                      <label className="text-[11px] font-bold text-[#7d6f6b]">Selecione um produto</label>
+                      <div className="max-h-40 overflow-y-auto space-y-1 border border-[#eee7de] rounded-lg bg-white p-1">
+                        {paginatedPickerProducts.length === 0 ? (
+                          <p className="text-[10px] text-gray-400 text-center py-4">Nenhum produto encontrado</p>
+                        ) : (
+                          paginatedPickerProducts.map((p) => (
+                            <button
+                              key={p.id}
+                              type="button"
+                              onClick={() => setSelectedProductId(String(p.id))}
+                              className={`w-full text-left px-2.5 py-1.5 rounded-md text-xs transition-all cursor-pointer ${
+                                selectedProductId === String(p.id)
+                                  ? "bg-brand text-white font-bold"
+                                  : "hover:bg-[#faf7f2] text-[#2e2624]"
+                              }`}
+                            >
+                              {p.name}{" "}
+                              <span className="opacity-75 font-mono text-[10px]">
+                                (estoque: {p.stock})
+                              </span>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                      <PaginationControls
+                        page={productPickerPage}
+                        pageSize={DEFAULT_PAGE_SIZE}
+                        totalItems={filteredPickerProducts.length}
+                        onPageChange={setProductPickerPage}
+                        className="pt-1 border-0"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="space-y-1">
+                        <label className="text-[11px] font-bold text-[#7d6f6b]">Qtde</label>
+                        <input
+                          type="number"
+                          min={1}
+                          value={selectedProductQty}
+                          onChange={(e) => setSelectedProductQty(Number(e.target.value))}
+                          className="w-full bg-white border border-[#eee7de] rounded-lg px-2.5 py-1.5 text-xs text-[#2c2221] focus:outline-none focus:border-brand"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleAddItem()}
+                        className="w-full bg-[#faf6f2] hover:bg-brand hover:text-white border border-brand/50 text-brand py-1.5 text-xs font-bold rounded-lg cursor-pointer transition-all uppercase"
+                      >
+                        Adicionar
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Added items list inside modal form */}
@@ -1088,15 +1142,15 @@ export default function DeliveryLogisticsPage({ themeId }: DeliveryLogisticsPage
                       <div className="col-span-2 text-right">Ação</div>
                     </div>
                     <div className="divide-y divide-gray-100">
-                      {addedItems.map((item, index) => (
-                        <div key={index} className="grid grid-cols-12 p-2.5 items-center bg-white">
+                      {paginatedAddedItems.map((item, index) => (
+                        <div key={addedItemsOffset + index} className="grid grid-cols-12 p-2.5 items-center bg-white">
                           <div className="col-span-6 font-bold text-[#2e2624]">{item.name}</div>
                           <div className="col-span-2 text-center font-mono font-bold text-gray-600">{item.quantity}x</div>
                           <div className="col-span-2 text-right font-mono">R$ {item.price.toFixed(2)}</div>
                           <div className="col-span-2 text-right">
                             <button
                               type="button"
-                              onClick={() => handleRemoveItem(index)}
+                              onClick={() => handleRemoveItem(addedItemsOffset + index)}
                               className="text-red-500 hover:text-red-700 font-bold px-2 cursor-pointer"
                             >
                               Remover
@@ -1105,6 +1159,13 @@ export default function DeliveryLogisticsPage({ themeId }: DeliveryLogisticsPage
                         </div>
                       ))}
                     </div>
+                    <PaginationControls
+                      page={addedItemsPage}
+                      pageSize={DEFAULT_PAGE_SIZE}
+                      totalItems={addedItems.length}
+                      onPageChange={setAddedItemsPage}
+                      className="p-2 border-t border-gray-100"
+                    />
                   </div>
                 )}
               </div>
