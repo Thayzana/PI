@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Shield, UserPlus, Trash2, Edit2, X, Check } from "lucide-react";
 import { apiFetch } from "../lib/api";
+import { toast, confirm } from "../lib/notify";
 import { AuthUser } from "../lib/auth";
 import { DEFAULT_PAGE_SIZE, paginateItems } from "../lib/pagination";
 import PaginationControls from "../components/PaginationControls";
@@ -109,11 +110,16 @@ export default function UsersPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Remover este usuário?")) return;
+    const ok = await confirm({
+      message: "Remover este usuário?",
+      destructive: true,
+      confirmLabel: "Remover",
+    });
+    if (!ok) return;
     const res = await apiFetch(`/api/auth/users/${id}`, { method: "DELETE" });
     if (!res.ok) {
       const data = await res.json();
-      alert(data.error || "Falha ao remover.");
+      toast.error(data.error || "Falha ao remover.");
       return;
     }
     await loadUsers();

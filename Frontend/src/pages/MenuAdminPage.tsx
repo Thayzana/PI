@@ -11,8 +11,6 @@ import {
   Tag,
   DollarSign,
   Layers,
-  AlertCircle,
-  Sparkles,
   ChevronsRight,
   ExternalLink
 } from "lucide-react";
@@ -22,6 +20,7 @@ import { withThemeQuery, apiFetch } from "../lib/api";
 import { sortByNamePt } from "../lib/sort";
 import { IMAGE_ACCEPT, readImageAsDataUrl, validateImageFile } from "../lib/imageUpload";
 import { getPublicMenuUrl } from "../lib/publicMenuUrl";
+import { toast, confirm } from "../lib/notify";
 import { DEFAULT_PAGE_SIZE, paginateItems } from "../lib/pagination";
 import PaginationControls from "../components/PaginationControls";
 
@@ -63,7 +62,6 @@ export default function MenuAdminPage({ themeId }: MenuAdminPageProps) {
   const [unitType, setUnitType] = useState<UnitType>("Unidade");
   const [wholesalePrice, setWholesalePrice] = useState<number>(0);
 
-  const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
   const [listPage, setListPage] = useState(1);
 
   const publicMenuUrl = getPublicMenuUrl(themeId);
@@ -110,11 +108,6 @@ export default function MenuAdminPage({ themeId }: MenuAdminPageProps) {
     setWholesalePrice(0);
   };
 
-  const showToast = (text: string, type: "success" | "error") => {
-    setMessage({ text, type });
-    setTimeout(() => setMessage(null), 4000);
-  };
-
   const DESSERT_SUGGESTIONS = [
     { name: "Brigadeiro", url: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=500&q=80" },
     { name: "Bolo de Pote", url: "https://images.unsplash.com/photo-1587314168485-3236d6710814?w=500&q=80" },
@@ -141,16 +134,16 @@ export default function MenuAdminPage({ themeId }: MenuAdminPageProps) {
     if (!file) return;
     const check = validateImageFile(file);
     if (!check.ok) {
-      showToast(check.message, "error");
+      toast.error(check.message);
       e.target.value = "";
       return;
     }
     try {
       const dataUrl = await readImageAsDataUrl(file);
       setImageUrl(dataUrl);
-      showToast(isRetail ? "Foto do produto carregada!" : "Foto do doce carregada!", "success");
+      toast.success(isRetail ? "Foto do produto carregada!" : "Foto do doce carregada!");
     } catch {
-      showToast("Erro ao processar a imagem.", "error");
+      toast.error("Erro ao processar a imagem.");
     }
   };
 
@@ -174,33 +167,38 @@ export default function MenuAdminPage({ themeId }: MenuAdminPageProps) {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Tem certeza que deseja excluir este produto do cardápio?")) return;
+    const ok = await confirm({
+      message: "Tem certeza que deseja excluir este produto do cardápio?",
+      destructive: true,
+      confirmLabel: "Excluir",
+    });
+    if (!ok) return;
     try {
       const res = await apiFetch(`/api/products/${id}`, { method: "DELETE" });
       if (res.ok) {
-        showToast("Produto removido do cardápio!", "success");
+        toast.success("Produto removido do cardápio!");
         setProducts(products.filter(p => p.id !== id));
         clearForm();
       } else {
-        showToast("Erro ao remover produto.", "error");
+        toast.error("Erro ao remover produto.");
       }
     } catch (e) {
-      showToast("Não foi possível conectar ao servidor.", "error");
+      toast.error("Não foi possível conectar ao servidor.");
     }
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      showToast("Digite o nome do produto.", "error");
+      toast.error("Digite o nome do produto.");
       return;
     }
     if (price <= 0) {
-      showToast("Insira um valor maior que R$ 0.", "error");
+      toast.error("Insira um valor maior que R$ 0.");
       return;
     }
     if (isPromo && (promoPrice <= 0 || promoPrice >= price)) {
-      showToast("O preço promocional de desconto deve ser maior que 0 e menor que o preço original.", "error");
+      toast.error("O preço promocional de desconto deve ser maior que 0 e menor que o preço original.");
       return;
     }
 
@@ -235,15 +233,15 @@ export default function MenuAdminPage({ themeId }: MenuAdminPageProps) {
       });
 
       if (res.ok) {
-        showToast(isEditing ? "Produto atualizado com sucesso!" : "Produto adicionado ao cardápio com sucesso!", "success");
+        toast.success(isEditing ? "Produto atualizado com sucesso!" : "Produto adicionado ao cardápio com sucesso!");
         loadProducts();
         clearForm();
       } else {
         const err = await res.json();
-        showToast(err.error || "Erro ao salvar produto.", "error");
+        toast.error(err.error || "Erro ao salvar produto.");
       }
     } catch (e) {
-      showToast("Erro de rede ao salvar.", "error");
+      toast.error("Erro de rede ao salvar.");
     }
   };
 
@@ -281,16 +279,6 @@ export default function MenuAdminPage({ themeId }: MenuAdminPageProps) {
 
   return (
     <div className="flex-grow flex flex-col p-4 md:p-8 overflow-y-auto bg-[#faf6f2] font-sans" id="menu-admin-page">
-      
-      {/* Toast notification message block */}
-      {message && (
-        <div className={`fixed top-4 right-4 z-55 flex items-center gap-2 p-4 rounded-xl shadow-lg border text-xs font-bold transition-all ${
-          message.type === "success" ? "bg-emerald-50 text-emerald-800 border-emerald-200" : "bg-red-50 text-red-800 border-red-200"
-        }`}>
-          {message.type === "success" ? <Sparkles size={16} /> : <AlertCircle size={16} />}
-          <span>{message.text}</span>
-        </div>
-      )}
 
       {/* Header element */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
@@ -321,7 +309,7 @@ export default function MenuAdminPage({ themeId }: MenuAdminPageProps) {
         {/* Left column - Lists & QR Code element */}
         <div className="lg:col-span-7 space-y-6">
           
-          <QrCodeCard menuUrl={publicMenuUrl} onToast={showToast} />
+          <QrCodeCard menuUrl={publicMenuUrl} />
 
           {/* Cards & Items Listing section */}
           <div className="bg-white rounded-2xl border border-[#eee7de] shadow-2xs overflow-hidden">
@@ -623,7 +611,7 @@ export default function MenuAdminPage({ themeId }: MenuAdminPageProps) {
                         type="button"
                         onClick={() => {
                           setImageUrl(dItem.url);
-                          showToast(`Foto de ${dItem.name} aplicada!`, "success");
+                          toast.success(`Foto de ${dItem.name} aplicada!`);
                         }}
                         className={`text-[8px] px-2 py-1 rounded font-bold border transition-all cursor-pointer ${
                           imageUrl === dItem.url 

@@ -34,6 +34,7 @@ import {
   estimateSourceLabel,
   type DeliveryEstimate,
 } from "../lib/deliveryEstimate";
+import { toast, confirm } from "../lib/notify";
 import { loadProfile } from "../lib/profile";
 
 interface DeliveryLogisticsPageProps {
@@ -387,11 +388,11 @@ export default function DeliveryLogisticsPage({ themeId }: DeliveryLogisticsPage
   const handleCreateOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!customerName.trim()) {
-      alert("Por favor, digite o nome do cliente.");
+      toast.error("Por favor, digite o nome do cliente.");
       return;
     }
     if (addedItems.length === 0) {
-      alert("Por favor, adicione pelo menos um produto ao pedido.");
+      toast.error("Por favor, adicione pelo menos um produto ao pedido.");
       return;
     }
 
@@ -436,11 +437,11 @@ export default function DeliveryLogisticsPage({ themeId }: DeliveryLogisticsPage
         resetForm();
       } else {
         const parseError = await res.json();
-        alert(`Erro ao criar o pedido: ${parseError.error || "Tente novamente"}`);
+        toast.error(`Erro ao criar o pedido: ${parseError.error || "Tente novamente"}`);
       }
     } catch (err) {
       console.error(err);
-      alert("Não foi possível conectar com o servidor.");
+      toast.error("Não foi possível conectar com o servidor.");
     } finally {
       setSubmitting(false);
     }
@@ -469,7 +470,13 @@ export default function DeliveryLogisticsPage({ themeId }: DeliveryLogisticsPage
 
   // Delete Order
   const handleDeleteOrder = async (orderId: number) => {
-    if (!confirm("Tem certeza que deseja excluir permanentemente este pedido? Isso afetará os relatórios.")) return;
+    const ok = await confirm({
+      message:
+        "Tem certeza que deseja excluir permanentemente este pedido? Isso afetará os relatórios.",
+      destructive: true,
+      confirmLabel: "Excluir pedido",
+    });
+    if (!ok) return;
 
     try {
       const res = await apiFetch(`/api/orders/${orderId}`, { method: "DELETE" });

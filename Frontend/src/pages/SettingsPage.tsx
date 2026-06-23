@@ -4,6 +4,7 @@ import { UserProfile } from "../lib/profile";
 import ProfileEditModal from "../components/ProfileEditModal";
 import { isAutoModeEnabled, setAutoModeEnabled } from "../lib/automation";
 import { apiFetch } from "../lib/api";
+import { confirm } from "../lib/notify";
 
 interface SettingsPageProps {
   onResetDatabase: () => void;
@@ -242,10 +243,15 @@ export default function SettingsPage({ onResetDatabase, resetting, profile, onPr
               </p>
               <button
                 type="button"
-                onClick={() => {
-                  if (confirm("Você deseja apagar todos os registros do banco SQL local e reinicializar com as receitas/estoques mostrados nas telas originais?")) {
-                    onResetDatabase();
-                  }
+                onClick={async () => {
+                  const ok = await confirm({
+                    message:
+                      "Você deseja apagar todos os registros do banco SQL local e reinicializar com as receitas/estoques mostrados nas telas originais?",
+                    destructive: true,
+                    confirmLabel: "Reiniciar banco",
+                    title: "Reiniciar tabelas SQL",
+                  });
+                  if (ok) onResetDatabase();
                 }}
                 disabled={resetting}
                 className="px-4 py-2 bg-[#b3543d] text-white font-bold text-xs rounded-xl hover:opacity-90 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm shadow-[#b3543d]/10"

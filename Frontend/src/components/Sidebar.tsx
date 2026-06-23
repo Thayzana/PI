@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { AppTheme } from "../types";
 import { comparePt } from "../lib/sort";
+import { confirm } from "../lib/notify";
 
 interface SidebarProps {
   activeTab: string;
@@ -178,10 +179,12 @@ export default function Sidebar({ activeTab, setActiveTab, lowStockCount, isOpen
 
         <button
           id="btn-logout"
-          onClick={() => {
-            if (confirm("Deseja realmente sair da sua sessão?")) {
-              onLogout();
-            }
+          onClick={async () => {
+            const ok = await confirm({
+              message: "Deseja realmente sair da sua sessão?",
+              confirmLabel: "Sair",
+            });
+            if (ok) onLogout();
           }}
           className="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium hover:bg-red-500/20 hover:text-red-300 text-red-200/90 transition-colors duration-200 cursor-pointer"
         >

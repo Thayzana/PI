@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState, ChangeEvent, type ReactNode } from "react";
 import { X, User, Building, Mail, Briefcase, Camera } from "lucide-react";
 import { UserProfile } from "../lib/profile";
+import { toast } from "../lib/notify";
 import { IMAGE_ACCEPT, readImageAsDataUrl, validateImageFile } from "../lib/imageUpload";
 
 interface ProfileEditModalProps {
@@ -29,7 +30,7 @@ export default function ProfileEditModal({
     if (!file) return;
     const check = validateImageFile(file);
     if (!check.ok) {
-      alert(check.message);
+      toast.error(check.message);
       e.target.value = "";
       return;
     }
@@ -37,7 +38,7 @@ export default function ProfileEditModal({
       const dataUrl = await readImageAsDataUrl(file);
       setDraft((d) => ({ ...d, avatarUrl: dataUrl }));
     } catch {
-      alert("Erro ao carregar a foto.");
+      toast.error("Erro ao carregar a foto.");
     }
   };
 

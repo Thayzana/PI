@@ -21,6 +21,7 @@ import {
   Info,
   Clock
 } from "lucide-react";
+import { toast } from "../lib/notify";
 import { Product, Order, OrderItem, isRetailSector } from "../types";
 import { withThemeQuery, apiFetch } from "../lib/api";
 import { sortByNamePt } from "../lib/sort";
@@ -231,12 +232,12 @@ export default function PublicMenuSimulator({ themeId, standalone = false }: Pub
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!customerName.trim() || !customerPhone.trim()) {
-      alert("Por favor, informe seu nome e telefone para contato.");
+      toast.error("Por favor, informe seu nome e telefone para contato.");
       return;
     }
 
     if (checkoutType === "Delivery" && (!rua || !numero || !bairro)) {
-      alert("Para a entrega, informe os dados de endereço completos.");
+      toast.error("Para a entrega, informe os dados de endereço completos.");
       return;
     }
 
@@ -286,11 +287,15 @@ export default function PublicMenuSimulator({ themeId, standalone = false }: Pub
         setStep("success");
         setCartItems([]);
       } else {
-        alert("Ocorreu um erro ao enviar o pedido. Tente novamente.");
+        toast.error("Ocorreu um erro ao enviar o pedido. Tente novamente.");
       }
     } catch (error) {
       console.error(error);
-      alert(isRetail ? "Não foi possível conectar com a loja." : "Não foi possível conectar com a confeitaria.");
+      toast.error(
+        isRetail
+          ? "Não foi possível conectar com a loja."
+          : "Não foi possível conectar com a confeitaria."
+      );
     }
   };
 

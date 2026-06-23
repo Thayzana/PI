@@ -19,6 +19,7 @@ import {
 import { motion } from "motion/react";
 import { Supplier } from "../types";
 import { withThemeQuery, apiFetch } from "../lib/api";
+import { toast, confirm } from "../lib/notify";
 import { DEFAULT_PAGE_SIZE, paginateItems } from "../lib/pagination";
 import PaginationControls from "../components/PaginationControls";
 
@@ -139,7 +140,7 @@ export default function SuppliersPage({ themeId }: SuppliersPageProps) {
   const handleSaveSupplier = (e: FormEvent) => {
     e.preventDefault();
     if (!formName.trim()) {
-      alert("Por favor, preencha o nome do fornecedor!");
+      toast.error("Por favor, preencha o nome do fornecedor!");
       return;
     }
 
@@ -187,24 +188,29 @@ export default function SuppliersPage({ themeId }: SuppliersPageProps) {
         setEditingSupplier(null);
       })
       .catch((err) => {
-        alert(err.message);
+        toast.error(err.message);
       });
   };
 
   // Delete Supplier
-  const handleDeleteSupplier = (id: number, name: string, e: MouseEvent) => {
+  const handleDeleteSupplier = async (id: number, name: string, e: MouseEvent) => {
     e.stopPropagation();
-    if (window.confirm(`Tem certeza absoluta de que deseja remover o fornecedor "${name}"?`)) {
-      apiFetch(`/api/suppliers/${id}`, { method: "DELETE" })
-        .then((res) => {
-          if (!res.ok) throw new Error("Não foi possível excluir.");
-          setSuppliers(prev => prev.filter(s => s.id !== id));
-          if (selectedSupplierId === id) {
-            setSelectedSupplierId(null);
-          }
-        })
-        .catch((err) => alert(err.message));
-    }
+    const ok = await confirm({
+      message: `Tem certeza absoluta de que deseja remover o fornecedor "${name}"?`,
+      destructive: true,
+      confirmLabel: "Remover",
+    });
+    if (!ok) return;
+
+    apiFetch(`/api/suppliers/${id}`, { method: "DELETE" })
+      .then((res) => {
+        if (!res.ok) throw new Error("Não foi possível excluir.");
+        setSuppliers(prev => prev.filter(s => s.id !== id));
+        if (selectedSupplierId === id) {
+          setSelectedSupplierId(null);
+        }
+      })
+      .catch((err) => toast.error(err.message));
   };
 
   // Add a quick product/raw material to selected supplier

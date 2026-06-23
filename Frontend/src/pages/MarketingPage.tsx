@@ -22,6 +22,7 @@ import confetti from "canvas-confetti";
 import { motion } from "motion/react";
 import { Product, Recipe } from "../types";
 import { withThemeQuery, apiFetch } from "../lib/api";
+import { toast } from "../lib/notify";
 
 interface MarketingPageProps {
   initialPromptContext?: string;
@@ -184,7 +185,7 @@ export default function MarketingPage({ initialPromptContext, themeId }: Marketi
   // --- AI TEXT CONTENT GENERATION ---
   const handleGenerateCampaign = async () => {
     if (!context.trim()) {
-      alert("Por favor escreva o produto ou a ocasião para orientar a IA.");
+      toast.error("Por favor escreva o produto ou a ocasião para orientar a IA.");
       return;
     }
 
@@ -227,7 +228,7 @@ export default function MarketingPage({ initialPromptContext, themeId }: Marketi
   // --- AI FLYER DESIGN AUTOGENERATOR ---
   const handleGenerateFlyerTextWithAI = async () => {
     if (!context.trim()) {
-      alert("Escreva uma base de produto/tema no campo do gerador de texto primeiro!");
+      toast.error("Escreva uma base de produto/tema no campo do gerador de texto primeiro!");
       return;
     }
 
@@ -284,7 +285,7 @@ export default function MarketingPage({ initialPromptContext, themeId }: Marketi
         colors: ["#db7c26", "#ea9aa2", "#9be0cb"]
       });
     } catch (error: any) {
-      alert("Não foi possível gerar sugestões automáticas: " + error.message);
+      toast.error("Não foi possível gerar sugestões automáticas: " + error.message);
     } finally {
       setLoading(false);
     }

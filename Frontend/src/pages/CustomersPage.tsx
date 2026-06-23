@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { UserCircle, UserPlus, Trash2, Edit2, X, Check, Phone } from "lucide-react";
 import { apiFetch } from "../lib/api";
+import { toast, confirm } from "../lib/notify";
 import { comparePt } from "../lib/sort";
 import { DEFAULT_PAGE_SIZE, paginateItems } from "../lib/pagination";
 import PaginationControls from "../components/PaginationControls";
@@ -104,11 +105,16 @@ export default function CustomersPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Remover este cliente?")) return;
+    const ok = await confirm({
+      message: "Remover este cliente?",
+      destructive: true,
+      confirmLabel: "Remover",
+    });
+    if (!ok) return;
     const res = await apiFetch(`/api/customers/${id}`, { method: "DELETE" });
     if (!res.ok) {
       const data = await res.json();
-      alert(data.error || "Falha ao remover.");
+      toast.error(data.error || "Falha ao remover.");
       return;
     }
     await loadCustomers();

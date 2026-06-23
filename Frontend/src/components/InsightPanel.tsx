@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { ActionCard, InsightItem } from "../types";
 import { apiFetch } from "../lib/api";
+import { toast, confirm } from "../lib/notify";
 
 interface InsightPanelProps {
   onNavigate: (tab: string, payload?: Record<string, unknown>) => void;
@@ -55,7 +56,11 @@ export default function InsightPanel({ onNavigate, compact }: InsightPanelProps)
         const recipeId = card.payload?.recipeId as number | undefined;
         const newPrice = card.payload?.newPrice as number | undefined;
         if (!recipeId || !newPrice) return;
-        if (!confirm(`Aplicar novo preço R$ ${newPrice.toFixed(2)} em ${card.title}?`)) return;
+        const ok = await confirm({
+          message: `Aplicar novo preço R$ ${newPrice.toFixed(2)} em ${card.title}?`,
+          confirmLabel: "Aplicar preço",
+        });
+        if (!ok) return;
         setApplyingId(card.id);
         try {
           const res = await apiFetch(`/api/recipes/${recipeId}/price`, {
@@ -64,11 +69,11 @@ export default function InsightPanel({ onNavigate, compact }: InsightPanelProps)
             body: JSON.stringify({ final_price: newPrice }),
           });
           if (res.ok) {
-            alert("Preço atualizado com sucesso!");
+            toast.success("Preço atualizado com sucesso!");
             load();
           } else {
             const err = await res.json();
-            alert(err.error || "Falha ao aplicar preço.");
+            toast.error(err.error || "Falha ao aplicar preço.");
           }
         } finally {
           setApplyingId(null);

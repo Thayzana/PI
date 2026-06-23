@@ -3,6 +3,7 @@ import { Plus, Trash2, Sliders, Info, Save, FileText, Check } from "lucide-react
 import { Recipe, RecipeIngredient, InvisibleCosts, isRetailSector } from "../types";
 import confetti from "canvas-confetti";
 import { apiFetch } from "../lib/api";
+import { toast, confirm } from "../lib/notify";
 import { DEFAULT_PAGE_SIZE, paginateItems } from "../lib/pagination";
 import PaginationControls from "../components/PaginationControls";
 
@@ -174,7 +175,7 @@ export default function PricingPage({ onRecipeSaved, themeId }: PricingPageProps
   // Save current pricing structure to SQLite
   const handleSaveRecipe = async () => {
     if (!recipeName.trim()) {
-      alert("Por favor, digite um nome para a receita.");
+      toast.error("Por favor, digite um nome para a receita.");
       return;
     }
     setSaving(true);
@@ -208,13 +209,13 @@ export default function PricingPage({ onRecipeSaved, themeId }: PricingPageProps
         
         loadData();
         onRecipeSaved();
-        alert(`Receita "${recipeName}" salva com sucesso!`);
+        toast.success(`Receita "${recipeName}" salva com sucesso!`);
       } else {
         const errorData = await res.json();
-        alert("Falha ao salvar receita: " + errorData.error);
+        toast.error("Falha ao salvar receita: " + errorData.error);
       }
     } catch (e: any) {
-      alert("Erro ao conectar ao servidor: " + e.message);
+      toast.error("Erro ao conectar ao servidor: " + e.message);
     } finally {
       setSaving(false);
     }
@@ -234,7 +235,12 @@ export default function PricingPage({ onRecipeSaved, themeId }: PricingPageProps
   };
 
   const handleDeleteRecipe = async (id: number, name: string) => {
-    if (!confirm(`Deseja realmente remover a receita "${name}"?`)) return;
+    const ok = await confirm({
+      message: `Deseja realmente remover a receita "${name}"?`,
+      destructive: true,
+      confirmLabel: "Remover",
+    });
+    if (!ok) return;
     try {
       const res = await apiFetch(`/api/recipes/${id}`, {
         method: "DELETE"

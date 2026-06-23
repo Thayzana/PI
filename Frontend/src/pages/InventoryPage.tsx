@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Package, AlertTriangle, Clock, Search, Plus, Trash2, Calendar, Barcode } from "lucide-react";
 import { Product, UNIT_TYPE_OPTIONS, UnitType, isRetailSector } from "../types";
 import { apiFetch } from "../lib/api";
+import { toast, confirm } from "../lib/notify";
 import { DEFAULT_PAGE_SIZE, paginateItems } from "../lib/pagination";
 import PaginationControls from "../components/PaginationControls";
 
@@ -99,7 +100,7 @@ export default function InventoryPage({ products, onProductsUpdated, loading, th
   const handleAddProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newSku.trim() || !newName.trim() || !newExpiration) {
-      alert("Por favor preencha todos os campos obrigatórios.");
+      toast.error("Por favor preencha todos os campos obrigatórios.");
       return;
     }
 
@@ -148,7 +149,7 @@ export default function InventoryPage({ products, onProductsUpdated, loading, th
         setNewWholesalePrice("");
       } else {
         const err = await res.json();
-        alert("Erro ao inserir: " + (err.error || "SKU duplicado ou inválido."));
+        toast.error("Erro ao inserir: " + (err.error || "SKU duplicado ou inválido."));
       }
     } catch (error) {
       console.error(error);
@@ -158,7 +159,12 @@ export default function InventoryPage({ products, onProductsUpdated, loading, th
   };
 
   const handleDeleteProduct = async (id: number, name: string) => {
-    if (!confirm(`Deseja realmente excluir "${name}" do inventário?`)) return;
+    const ok = await confirm({
+      message: `Deseja realmente excluir "${name}" do inventário?`,
+      destructive: true,
+      confirmLabel: "Excluir",
+    });
+    if (!ok) return;
     try {
       const res = await apiFetch(`/api/products/${id}`, { method: "DELETE" });
       if (res.ok) {

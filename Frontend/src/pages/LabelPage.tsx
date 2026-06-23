@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Tag, Printer, QrCode, Apple, Search } from "lucide-react";
 import { NutritionalFacts, Recipe } from "../types";
 import { loadProfile, getProfileInitials } from "../lib/profile";
+import { toast } from "../lib/notify";
 import { apiFetch } from "../lib/api";
 import { DEFAULT_PAGE_SIZE, paginateItems } from "../lib/pagination";
 import PaginationControls from "../components/PaginationControls";
@@ -103,7 +104,7 @@ export default function LabelPage() {
     
     const printWindow = window.open("", "_blank");
     if (!printWindow) {
-      alert("Por favor libere os popups do seu navegador para imprimir!");
+      toast.warning("Por favor libere os popups do seu navegador para imprimir!");
       return;
     }
 

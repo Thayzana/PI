@@ -21,6 +21,7 @@ import UsersPage from "./pages/UsersPage";
 import CustomersPage from "./pages/CustomersPage";
 import { Product, DashboardStats, AppTheme, normalizeThemeId } from "./types";
 import { withThemeQuery, apiFetch } from "./lib/api";
+import { toast, confirm } from "./lib/notify";
 
 const THEME_PRESETS: AppTheme[] = [
   {
@@ -217,7 +218,7 @@ export default function App() {
       });
 
       if (res.ok) {
-        alert("Configurações originais restauradas! Recarregando dados.");
+        toast.success("Configurações originais restauradas! Recarregando dados.");
         fetchData();
       }
     } catch (e) {

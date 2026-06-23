@@ -6,13 +6,13 @@ import {
   isLocalhostMenuUrl,
   printQrCode,
 } from "../lib/qrcode";
+import { toast } from "../lib/notify";
 
 interface QrCodeCardProps {
   menuUrl: string;
-  onToast?: (text: string, type: "success" | "error") => void;
 }
 
-export default function QrCodeCard({ menuUrl, onToast }: QrCodeCardProps) {
+export default function QrCodeCard({ menuUrl }: QrCodeCardProps) {
   const [qrDataUrl, setQrDataUrl] = useState("");
   const [loading, setLoading] = useState(true);
   const isLocalhost = isLocalhostMenuUrl(menuUrl);
@@ -25,7 +25,7 @@ export default function QrCodeCard({ menuUrl, onToast }: QrCodeCardProps) {
         if (!cancelled) setQrDataUrl(url);
       })
       .catch(() => {
-        if (!cancelled) onToast?.("Não foi possível gerar o QR Code.", "error");
+        if (!cancelled) toast.error("Não foi possível gerar o QR Code.");
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -38,18 +38,18 @@ export default function QrCodeCard({ menuUrl, onToast }: QrCodeCardProps) {
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(menuUrl);
-      onToast?.("Link copiado para a área de transferência!", "success");
+      toast.success("Link copiado para a área de transferência!");
     } catch {
-      onToast?.("Não foi possível copiar o link.", "error");
+      toast.error("Não foi possível copiar o link.");
     }
   };
 
   const handleDownload = async () => {
     try {
       await downloadQrPng(menuUrl, "qrcode_gestify_cardapio.png");
-      onToast?.("QR Code baixado com sucesso!", "success");
+      toast.success("QR Code baixado com sucesso!");
     } catch {
-      onToast?.("Erro ao baixar o QR Code.", "error");
+      toast.error("Erro ao baixar o QR Code.");
     }
   };
 
