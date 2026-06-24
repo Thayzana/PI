@@ -17,7 +17,7 @@ O projeto é dividido em dois repositórios:
 PI3/
 ├── Frontend/           # React 19 + Vite + Tailwind CSS v4 (porta 5173)
 ├── Docs/               # Requisitos e especificação técnica
-└── docker-compose.yml  # Frontend + PostgreSQL local
+└── docker-compose.yml  # Frontend + Backend + PostgreSQL local
 
 Gestify-Backend2/       # Repositório irmão — API REST (porta 3000)
 ```
@@ -163,28 +163,29 @@ Endpoints públicos da API: `GET /api/products`, `POST /api/orders`.
 
 ## Docker
 
+O Docker Compose está configurado de forma completa para subir toda a pilha da aplicação (Banco de dados PostgreSQL, Backend API e Frontend UI) de forma automatizada.
+
 Requisitos: Docker Compose v2.
 
 ```bash
 docker compose up --build
 ```
 
-| Serviço | URL |
-|---------|-----|
-| App (UI) | http://localhost:8080 |
-| PostgreSQL | `localhost:5432` (user/senha/db: `postgres`/`postgres`/`gestify`) |
+| Serviço | URL / Porta |
+|---------|-------------|
+| **Frontend (UI)** | [http://localhost:8080](http://localhost:8080) |
+| **Backend (API)** | [http://localhost:3000](http://localhost:3000) |
+| **PostgreSQL** | `localhost:5432` (user: `postgres` / password: `postgres` / db: `gestify`) |
 
-A API **não** sobe neste compose — rode **Gestify-Backend2** localmente ou aponte para a Vercel.
+### Como funciona:
+1. O container do `backend` aguarda o banco de dados `postgres` estar saudável antes de iniciar.
+2. O `frontend` (atendido via Nginx) encaminha as chamadas `/api` automaticamente para a API no container do `backend`.
+3. Se você quiser que o frontend do Docker aponte para outra API externa (como a de produção na Vercel), basta passar a variável de ambiente:
+   ```bash
+   API_UPSTREAM=https://seu-backend.vercel.app docker compose up --build
+   ```
 
-O nginx do frontend encaminha `/api` para `API_UPSTREAM` (padrão: `http://host.docker.internal:3000`).
-
-Para usar a API na Vercel:
-
-```bash
-API_UPSTREAM=https://seu-backend.vercel.app docker compose up --build
-```
-
-Parar:
+Parar a execução dos containers:
 
 ```bash
 docker compose down

@@ -625,8 +625,8 @@ export default function MenuAdminPage({ themeId }: MenuAdminPageProps) {
                   </div>
                 </div>
 
-                {/* Image preview frame if present */}
-                {imageUrl && (
+                {/* Image preview frame if present (only shown if local upload/data url) */}
+                {imageUrl && imageUrl.startsWith("data:") && (
                   <div className="relative w-full h-16 rounded-xl overflow-hidden border border-gray-150 mt-1">
                     <img 
                       src={imageUrl} 

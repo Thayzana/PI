@@ -26,13 +26,28 @@ services:
       context: ./Frontend
       dockerfile: Dockerfile
       args:
-        API_UPSTREAM: ${API_UPSTREAM:-http://host.docker.internal:3000}
+        API_UPSTREAM: ${API_UPSTREAM:-http://gestify-backend:3000}
     container_name: gestify-frontend
     restart: unless-stopped
     ports:
       - "8080:80"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ../Gestify-Backend2
+      dockerfile: Dockerfile
+    container_name: gestify-backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@gestify-postgres:5432/gestify
+      - PORT=3000
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   postgres_data:

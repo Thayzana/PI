@@ -12,13 +12,14 @@ RUN npm run build
 
 FROM nginx:alpine AS runner
 
-ARG API_UPSTREAM=http://host.docker.internal:3000
+ARG API_UPSTREAM=http://gestify-backend:3000
 ENV API_UPSTREAM=${API_UPSTREAM}
 
 RUN apk add --no-cache gettext
 
 COPY nginx.conf.template /etc/nginx/conf.d/default.conf.template
 COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN sed -i 's/\r$//' /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 COPY --from=builder /app/dist /usr/share/nginx/html
 
